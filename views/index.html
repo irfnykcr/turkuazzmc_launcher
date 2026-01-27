@@ -8,10 +8,10 @@
 	<link rel="stylesheet" href="../src/css/style.css">
 </head>
 <!-- body: #181818 -->
-<body class="bg- text-neutral-100 h-screen flex overflow-hidden select-none">
+<body class="text-neutral-100 h-screen flex overflow-hidden select-none w-screen">
 	
 	<!-- Sidebar -->
-	<div class="w-64 bg-neutral-800 flex flex-col border-r border-neutral-700 h-full">
+	<div class="w-64 bg-neutral-800 flex flex-col border-r border-neutral-700 h-full shrink-0">
 		<div class="p-4 border-b border-neutral-700">
 			<h1 class="text-xl font-bold flex items-center gap-2">
 				<span class="text-green-500">Turkuazz</span> Launcher
@@ -41,7 +41,7 @@
 	</div>
 
 	<!-- Main Content -->
-	<div class="flex-1 flex flex-col relative h-full">
+	<div class="flex-1 flex flex-col relative h-full min-w-0 overflow-hidden">
 		
 		<!-- Header / Selected Profile Info -->
 		<div class="bg-neutral-800 p-6 shadow-md z-10 relative">
@@ -55,19 +55,24 @@
 			</div>
 		</div>
 
-		<!-- Middle Area (Logs / Status) -->
-		<div class="flex-1 bg-neutral-900 p-6 overflow-hidden flex flex-col">
+		<!-- Middle Area (Consoles / Status) -->
+		<div class="flex-1 bg-neutral-900 p-6 flex flex-col min-h-0">
+			<!-- Console Buttons -->
+			<div id="consoleButtons" class="flex gap-2 mb-4 overflow-x-scroll pb-2">
+				<!-- Console buttons will be added here dynamically -->
+			</div>
 			
-			<div id="logsContainer" class="flex-1 bg-black rounded p-4 font-mono text-xs text-green-400 overflow-y-auto mb-4 hidden">
-				<!-- Logs go here -->
+			<!-- Logs Area -->
+			<div id="logsArea" class="flex-1 min-h-0 mb-4 relative">
+				<!-- Log containers will be added here dynamically -->
 			</div>
 
-			<div id="statusMessage" class="text-center text-neutral-400 italic mb-4">
+			<div id="statusMessage" class="text-center text-neutral-400 italic mb-4 flex-shrink-0">
 				Ready to launch
 			</div>
 
 			<!-- Launch Button Area -->
-			<div class="flex justify-center">
+			<div class="flex justify-center flex-shrink-0">
 				<button id="launchBtn" class="bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-lg font-bold py-4 px-12 rounded shadow-lg transform transition active:scale-95">
 					PLAY
 				</button>
@@ -202,6 +207,10 @@
 						<label class="flex items-center gap-3 cursor-pointer hover:text-white group">
 							<input type="checkbox" id="hideLauncherCheckbox" class="rounded bg-neutral-700 border-neutral-600 text-green-500 focus:ring-0 w-5 h-5">
 							<span class="text-sm">Hide launcher after successful game launch</span>
+						</label>
+						<label class="flex items-center gap-3 cursor-pointer hover:text-white group ml-8">
+							<input type="checkbox" id="exitAfterLaunchCheckbox" class="rounded bg-neutral-700 border-neutral-600 text-green-500 focus:ring-0 w-5 h-5 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+							<span class="text-sm">Fully exit launcher (instead of hiding and returning)</span>
 						</label>
 					</div>
 				</div>

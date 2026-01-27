@@ -13,6 +13,8 @@ const store = new Store({
 	  : path.join(os.homedir(), '.minecraft'),
 	javaPath: 'java',
 	ramAllocation: 2048,
+	hideLauncher: false,
+	exitAfterLaunch: false,
 	auth: {
 		type: 'offline',
 		name: 'Steve',
@@ -25,6 +27,17 @@ const store = new Store({
 })
 
 store.reset() // --- DEBUG --- keep it
+
+function writeLog(gamePath, message) {
+	try {
+		const logPath = path.join(gamePath, 'turkuazz_logs.txt')
+		const timestamp = new Date().toLocaleString('en-US', { hour12: false })
+		const logLine = `[${timestamp}] ${message}\n`
+		fs.appendFileSync(logPath, logLine, 'utf8')
+	} catch (e) {
+		console.error('Failed to write log:', e)
+	}
+}
 
 
 const launcher = new Client()
@@ -53,6 +66,10 @@ app.on('ready', () => {
 	createWindow()
 })
 
+app.on('window-all-closed', () => {
+	console.log('bye')
+	app.quit()	
+})
 
 // --- IPC Handlers ---
 
@@ -63,6 +80,8 @@ ipcMain.handle('get-settings', () => {
 		gamePath: store.get('gamePath'),
 		javaPath: store.get('javaPath'),
 		ramAllocation: store.get('ramAllocation'),
+		hideLauncher: store.get('hideLauncher'),
+		exitAfterLaunch: store.get('exitAfterLaunch'),
 		profiles: [],
 		auth: store.get('auth'),
 		accounts: store.get('accounts') || []
@@ -120,6 +139,8 @@ ipcMain.handle('save-settings', (event, newSettings) => {
 	if (newSettings.gamePath) store.set('gamePath', newSettings.gamePath)
 	if (newSettings.javaPath) store.set('javaPath', newSettings.javaPath)
 	if (newSettings.ramAllocation !== undefined) store.set('ramAllocation', newSettings.ramAllocation)
+	if (newSettings.hideLauncher !== undefined) store.set('hideLauncher', newSettings.hideLauncher)
+	if (newSettings.exitAfterLaunch !== undefined) store.set('exitAfterLaunch', newSettings.exitAfterLaunch)
 	
 	if (newSettings.profiles && newSettings.profiles.length >= 0) {
 		try {
@@ -207,6 +228,7 @@ ipcMain.handle('login-microsoft', async () => {
 })
 
 ipcMain.handle('launch-game', async (event, options) => {
+	const instanceId = options.instanceId
 	let type = "release"
 	let versionNumber = options.version
 	let customVersion = null
@@ -244,22 +266,66 @@ ipcMain.handle('launch-game', async (event, options) => {
 		},
 		memory: {
 			max: options.ram || "2G",
-			min: "1G"
+			min: options.ram || "2G"
 		},
 		javaPath: options.javaPath || store.get('javaPath') || 'java'
 	}
+	// we cant show access token in logs
+	let _optswithoutaccesstoken = { ...opts }
+	if (_optswithoutaccesstoken.authorization.access_token) {
+		_optswithoutaccesstoken.authorization.access_token = '***'
+	}
+	console.log("Launching with options:", _optswithoutaccesstoken)
+	_optswithoutaccesstoken = undefined
 
-	console.log("Launching with options:", opts)
+	const gamePath = options.gamePath || store.get('gamePath')
+	const profileName = options.profileName || 'Unknown'
+	const accountName = options.auth?.name || 'Unknown'
+	
+	writeLog(gamePath, `LAUNCH | Instance: ${instanceId} | Profile: ${profileName} | Version: ${options.version} | RAM: ${options.ram} | Account: ${accountName}`)
 
-	launcher.removeAllListeners('data')
-	launcher.removeAllListeners('close')
-	launcher.removeAllListeners('debug')
+	const launcherInstance = new Client()
+	launcherInstance.launch(opts)
 
-	launcher.launch(opts)
+	const hideLauncher = store.get('hideLauncher')
+	const exitAfterLaunch = store.get('exitAfterLaunch')
+	let hasHidden = false
 
-	launcher.on('debug', (e) => win.webContents.send('log', `[DEBUG] ${e}`))
-	launcher.on('data', (e) => win.webContents.send('log', `${e}`))
-	launcher.on('close', (e) => win.webContents.send('log', `[CLOSE] Game closed with code ${e}`))
+	launcherInstance.on('debug', (e) => {
+		const msg = e.toString()
+		win.webContents.send('log', { instanceId, message: `[DEBUG] ${msg}` })
+		writeLog(gamePath, `DEBUG | Instance: ${instanceId} | ${msg}`)
+	})
+	launcherInstance.on('data', (e) => {
+		const msg = e.toString()
+		win.webContents.send('log', { instanceId, message: msg })
+		writeLog(gamePath, `DATA | Instance: ${instanceId} | ${msg}`)
+		
+		if (hideLauncher && !hasHidden) {
+			if (msg.includes('Setting user:') || 
+				msg.includes('LWJGL') || 
+				msg.includes('OpenGL') ||
+				msg.includes('Created: ')) {
+				hasHidden = true
+				if (exitAfterLaunch) {
+					writeLog(gamePath, `EXIT | Instance: ${instanceId} | Fully exiting launcher`)
+					console.log('[EXIT] Fully exiting launcher - game started')
+					app.quit()
+				} else {
+					win.hide()
+					console.log('[HIDE] Launcher hidden - game started')
+				}
+			}
+		}
+	})
+	launcherInstance.on('close', (e) => {
+		win.webContents.send('log', { instanceId, message: `[CLOSE] Game closed with code ${e}` })
+		writeLog(gamePath, `CLOSE | Instance: ${instanceId} | Exit Code: ${e}`)
+		if (hideLauncher && hasHidden && !exitAfterLaunch) {
+			win.show()
+			console.log('[SHOW] Launcher restored - game closed')
+		}
+	})
 	
 	return true
 })
