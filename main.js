@@ -8,19 +8,19 @@ const fs = require('fs')
 
 const store = new Store({
   defaults: {
-    gamePath: process.platform === 'win32' 
-      ? path.join(process.env.APPDATA, '.minecraft') 
-      : path.join(os.homedir(), '.minecraft'),
-    javaPath: 'java',
-    ramAllocation: 2048,
-    auth: {
-        type: 'offline',
-        name: 'Steve',
-        uuid: '00000000-0000-0000-0000-000000000000',
-        access_token: '',
-        client_token: '',
-        user_properties: '{}'
-    }
+	gamePath: process.platform === 'win32' 
+	  ? path.join(process.env.APPDATA, '.minecraft') 
+	  : path.join(os.homedir(), '.minecraft'),
+	javaPath: 'java',
+	ramAllocation: 2048,
+	auth: {
+		type: 'offline',
+		name: 'Steve',
+		uuid: '00000000-0000-0000-0000-000000000000',
+		access_token: '',
+		client_token: '',
+		user_properties: '{}'
+	}
   }
 })
 
@@ -33,13 +33,13 @@ let win
 const createWindow = () => {
   console.log('[STARTUP] Creating window...')
   win = new BrowserWindow({
-    width: 1280,
-    height: 720,
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-      nodeIntegration: false,
-      contextIsolation: true
-    }
+	width: 1280,
+	height: 720,
+	webPreferences: {
+	  preload: path.join(__dirname, 'preload.js'),
+	  nodeIntegration: false,
+	  contextIsolation: true
+	}
   })
 
   win.setMenuBarVisibility(false)
@@ -49,68 +49,68 @@ const createWindow = () => {
 }
 
 app.on('ready', () => {
-    console.log('[STARTUP] App ready')
-    createWindow()
+	console.log('[STARTUP] App ready')
+	createWindow()
 })
 
 
 // --- IPC Handlers ---
 
 ipcMain.handle('get-settings', () => {
-    console.log('[get-settings] Called')
-    
-    let settings = {
-        gamePath: store.get('gamePath'),
-        javaPath: store.get('javaPath'),
-        ramAllocation: store.get('ramAllocation'),
-        profiles: [],
-        auth: store.get('auth'),
-        accounts: store.get('accounts') || []
-    }
-    
-    console.log('[get-settings] gamePath:', settings.gamePath)
-    
-    try {
-        const profilesPath = path.join(settings.gamePath, 'launcher_profiles.json')
-        console.log('[get-settings] Looking for:', profilesPath)
-        
-        if (fs.existsSync(profilesPath)) {
-            console.log('[get-settings] File exists, reading...')
-            const content = fs.readFileSync(profilesPath, 'utf-8')
-            const data = JSON.parse(content)
-            const imported = []
+	console.log('[get-settings] Called')
+	
+	let settings = {
+		gamePath: store.get('gamePath'),
+		javaPath: store.get('javaPath'),
+		ramAllocation: store.get('ramAllocation'),
+		profiles: [],
+		auth: store.get('auth'),
+		accounts: store.get('accounts') || []
+	}
+	
+	console.log('[get-settings] gamePath:', settings.gamePath)
+	
+	try {
+		const profilesPath = path.join(settings.gamePath, 'launcher_profiles.json')
+		console.log('[get-settings] Looking for:', profilesPath)
+		
+		if (fs.existsSync(profilesPath)) {
+			console.log('[get-settings] File exists, reading...')
+			const content = fs.readFileSync(profilesPath, 'utf-8')
+			const data = JSON.parse(content)
+			const imported = []
 
-            if (data.profiles) {
-                console.log('[get-settings] Found profiles object, processing...')
-                for (const [id, p] of Object.entries(data.profiles)) {
-                    console.log('[get-settings] Processing profile:', id, 'type:', p.type, 'version:', p.lastVersionId)
-                    
-                    if (p.type === 'latest-release' || p.type === 'latest-snapshot') {
-                        continue
-                    }
+			if (data.profiles) {
+				console.log('[get-settings] Found profiles object, processing...')
+				for (const [id, p] of Object.entries(data.profiles)) {
+					console.log('[get-settings] Processing profile:', id, 'type:', p.type, 'version:', p.lastVersionId)
+					
+					if (p.type === 'latest-release' || p.type === 'latest-snapshot') {
+						continue
+					}
 
-                    if (p.lastVersionId) {
-                        imported.push({
-                            name: p.name || `Profile (${id.substring(0,6)})`,
-                            version: p.lastVersionId,
-                            type: 'offline', 
-                            auth: null
-                        })
-                    }
-                }
-                
-                console.log('[get-settings] Imported count:', imported.length)
-            }
-            
-            settings.profiles = imported
-        } else {
-            console.log('[get-settings] File does not exist')
-        }
-    } catch (e) {
-        console.error('[get-settings] Failed to import profiles:', e)
-    }
-    
-    console.log('[get-settings] Returning settings with', settings.profiles.length, 'profiles')
+					if (p.lastVersionId) {
+						imported.push({
+							name: p.name || `Profile (${id.substring(0,6)})`,
+							version: p.lastVersionId,
+							type: 'offline', 
+							auth: null
+						})
+					}
+				}
+				
+				console.log('[get-settings] Imported count:', imported.length)
+			}
+			
+			settings.profiles = imported
+		} else {
+			console.log('[get-settings] File does not exist')
+		}
+	} catch (e) {
+		console.error('[get-settings] Failed to import profiles:', e)
+	}
+	
+	console.log('[get-settings] Returning settings with', settings.profiles.length, 'profiles')
 	return settings
 })
 
@@ -207,31 +207,31 @@ ipcMain.handle('login-microsoft', async () => {
 })
 
 ipcMain.handle('launch-game', async (event, options) => {
-    let type = "release"
-    let versionNumber = options.version
-    let customVersion = null
+	let type = "release"
+	let versionNumber = options.version
+	let customVersion = null
 
-    if (/^\d+\.\d+(\.\d+)?$/.test(options.version)) {
-        type = "release"
-    } else if (/^\d{2}w\d{2}[a-z]$/.test(options.version)) {
-        type = "snapshot"
-    } else {
-        type = "custom"
-        try {
-            const vPath = path.join(options.gamePath || store.get('gamePath'), 'versions', options.version, `${options.version}.json`)
-            if (fs.existsSync(vPath)) {
-                const vData = JSON.parse(fs.readFileSync(vPath, 'utf8'))
-                if (vData.inheritsFrom) {
-                    customVersion = options.version
-                    versionNumber = vData.inheritsFrom
-                    type = "release"
-                    console.log(`Detected inheritance: ${customVersion} inherits from ${versionNumber}`)
-                }
-            }
-        } catch (e) {
-            console.warn("Failed to check version inheritance:", e)
-        }
-    }
+	if (/^\d+\.\d+(\.\d+)?$/.test(options.version)) {
+		type = "release"
+	} else if (/^\d{2}w\d{2}[a-z]$/.test(options.version)) {
+		type = "snapshot"
+	} else {
+		type = "custom"
+		try {
+			const vPath = path.join(options.gamePath || store.get('gamePath'), 'versions', options.version, `${options.version}.json`)
+			if (fs.existsSync(vPath)) {
+				const vData = JSON.parse(fs.readFileSync(vPath, 'utf8'))
+				if (vData.inheritsFrom) {
+					customVersion = options.version
+					versionNumber = vData.inheritsFrom
+					type = "release"
+					console.log(`Detected inheritance: ${customVersion} inherits from ${versionNumber}`)
+				}
+			}
+		} catch (e) {
+			console.warn("Failed to check version inheritance:", e)
+		}
+	}
 
 	const opts = {
 		clientPackage: null,
@@ -240,7 +240,7 @@ ipcMain.handle('launch-game', async (event, options) => {
 		version: {
 			number: versionNumber,
 			type: type,
-            custom: customVersion
+			custom: customVersion
 		},
 		memory: {
 			max: options.ram || "2G",

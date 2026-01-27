@@ -1,234 +1,253 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Turkuazz Launcher</title>
-    <script src="../assets/tailwindcss.js"></script>
-    <link rel="stylesheet" href="../src/css/style.css">
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Turkuazz Launcher</title>
+	<script src="../assets/tailwindcss.js"></script>
+	<link rel="stylesheet" href="../src/css/style.css">
 </head>
 <!-- body: #181818 -->
 <body class="bg- text-neutral-100 h-screen flex overflow-hidden select-none">
-    
-    <!-- Sidebar -->
-    <div class="w-64 bg-neutral-800 flex flex-col border-r border-neutral-700 h-full">
-        <div class="p-4 border-b border-neutral-700">
-            <h1 class="text-xl font-bold flex items-center gap-2">
-                <span class="text-green-500">Turkuazz</span> Launcher
-            </h1>
-        </div>
-        
-        <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-2" id="profileList">
-            <!-- Profile Items Generated Here -->
-        </div>
+	
+	<!-- Sidebar -->
+	<div class="w-64 bg-neutral-800 flex flex-col border-r border-neutral-700 h-full">
+		<div class="p-4 border-b border-neutral-700">
+			<h1 class="text-xl font-bold flex items-center gap-2">
+				<span class="text-green-500">Turkuazz</span> Launcher
+			</h1>
+		</div>
+		
+		<div class="flex-1 overflow-y-auto p-4 flex flex-col gap-2" id="profileList">
+			<!-- Profile Items Generated Here -->
+		</div>
 
-        <div class="p-4 border-t border-neutral-700 bg-neutral-850">
-            <!-- Account Section -->
-            <div id="accountSection" class="mb-4 flex items-center justify-between bg-neutral-900 p-2 rounded cursor-pointer hover:bg-black transition">
-                <div class="flex items-center gap-2 overflow-hidden">
-                    <img src="https://mc-heads.net/avatar/Steve" id="accountAvatar" class="w-8 h-8 rounded">
-                    <div class="flex flex-col">
-                        <span id="accountName" class="text-sm font-bold truncate w-24">Steve</span>
-                        <span id="accountType" class="text-[10px] text-neutral-500 uppercase">Offline</span>
-                    </div>
-                </div>
-            </div>
+		<div class="p-4 border-t border-neutral-700 bg-neutral-850">
+			<!-- Account Section -->
+			<div id="accountSection" class="mb-4 flex items-center justify-between bg-neutral-900 p-2 rounded cursor-pointer hover:bg-black transition">
+				<div class="flex items-center gap-2 overflow-hidden">
+					<img src="https://mc-heads.net/avatar/Steve" id="accountAvatar" class="w-8 h-8 rounded">
+					<div class="flex flex-col">
+						<span id="accountName" class="text-sm font-bold truncate w-24">Steve</span>
+						<span id="accountType" class="text-[10px] text-neutral-500 uppercase">Offline</span>
+					</div>
+				</div>
+			</div>
 
-            <button id="createProfileBtn" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded transition text-sm">
-                + New Profile
-            </button>
-        </div>
-    </div>
+			<button id="createProfileBtn" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded transition text-sm">
+				+ New Profile
+			</button>
+		</div>
+	</div>
 
-    <!-- Main Content -->
-    <div class="flex-1 flex flex-col relative h-full">
-        
-        <!-- Header / Selected Profile Info -->
-        <div class="bg-neutral-800 p-6 shadow-md z-10 relative">
-            <button id="settingsBtn" class="absolute top-4 right-4 p-2 text-neutral-400 hover:text-white transition" title="Settings">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-            </button>
-            <h2 id="currentProfileName" class="text-3xl font-bold mb-2">No Profile Selected</h2>
-            <div class="flex items-center gap-4 text-sm text-neutral-400">
-                <span id="currentProfileVersion">Version: -</span>
-                <span id="currentProfileMode">Mode: -</span>
-            </div>
-        </div>
+	<!-- Main Content -->
+	<div class="flex-1 flex flex-col relative h-full">
+		
+		<!-- Header / Selected Profile Info -->
+		<div class="bg-neutral-800 p-6 shadow-md z-10 relative">
+			<button id="settingsBtn" class="absolute top-4 right-4 p-2 text-neutral-400 hover:text-white transition" title="Settings">
+				<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+			</button>
+			<h2 id="currentProfileName" class="text-3xl font-bold mb-2">No Profile Selected</h2>
+			<div class="flex items-center gap-4 text-sm text-neutral-400">
+				<span id="currentProfileVersion">Version: -</span>
+				<span id="currentProfileMode">Mode: -</span>
+			</div>
+		</div>
 
-        <!-- Middle Area (Logs / Status) -->
-        <div class="flex-1 bg-neutral-900 p-6 overflow-hidden flex flex-col">
-            
-            <div id="logsContainer" class="flex-1 bg-black rounded p-4 font-mono text-xs text-green-400 overflow-y-auto mb-4 hidden">
-                <!-- Logs go here -->
-            </div>
+		<!-- Middle Area (Logs / Status) -->
+		<div class="flex-1 bg-neutral-900 p-6 overflow-hidden flex flex-col">
+			
+			<div id="logsContainer" class="flex-1 bg-black rounded p-4 font-mono text-xs text-green-400 overflow-y-auto mb-4 hidden">
+				<!-- Logs go here -->
+			</div>
 
-            <div id="statusMessage" class="text-center text-neutral-400 italic mb-4">
-                Ready to launch
-            </div>
+			<div id="statusMessage" class="text-center text-neutral-400 italic mb-4">
+				Ready to launch
+			</div>
 
-            <!-- Launch Button Area -->
-            <div class="flex justify-center">
-                <button id="launchBtn" class="bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-lg font-bold py-4 px-12 rounded shadow-lg transform transition active:scale-95">
-                    PLAY
-                </button>
-            </div>
-        </div>
-    </div>
+			<!-- Launch Button Area -->
+			<div class="flex justify-center">
+				<button id="launchBtn" class="bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-lg font-bold py-4 px-12 rounded shadow-lg transform transition active:scale-95">
+					PLAY
+				</button>
+			</div>
+		</div>
+	</div>
 
-    <!-- Create/Edit Profile Modal -->
-    <div id="profileModal" class="fixed inset-0 bg-black bg-opacity-70 hidden flex items-center justify-center z-50">
-        <div class="bg-neutral-800 rounded-lg w-full max-w-sm p-6 shadow-xl border border-neutral-700">
-            <h3 class="text-xl font-bold mb-4">Create Profile</h3>
-            
-            <form id="profileForm" class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium mb-1">Profile Name</label>
-                    <input type="text" id="pName" required class="w-full bg-neutral-700 border border-neutral-600 rounded p-2 focus:border-green-500 focus:outline-none">
-                </div>
+	<!-- Create/Edit Profile Modal -->
+	<div id="profileModal" class="fixed inset-0 bg-black bg-opacity-70 hidden flex items-center justify-center z-50">
+		<div class="bg-neutral-800 rounded-lg w-full max-w-sm p-6 shadow-xl border border-neutral-700">
+			<h3 class="text-xl font-bold mb-4">Create Profile</h3>
+			
+			<form id="profileForm" class="space-y-4">
+				<div>
+					<label class="block text-sm font-medium mb-1">Profile Name</label>
+					<input type="text" id="pName" required class="w-full bg-neutral-700 border border-neutral-600 rounded p-2 focus:border-green-500 focus:outline-none">
+				</div>
 
-                <div>
-                    <label class="block text-sm font-medium mb-1">Game Version</label>
-                    <select id="pVersion" class="w-full bg-neutral-700 border border-neutral-600 rounded p-2 focus:border-green-500 focus:outline-none scrollbar-thin scrollbar-thumb-neutral-600 mb-2">
-                        <option>Loading versions...</option>
-                    </select>
+				<div>
+					<label class="block text-sm font-medium mb-1">Game Version</label>
+					<select id="pVersion" class="w-full bg-neutral-700 border border-neutral-600 rounded p-2 focus:border-green-500 focus:outline-none scrollbar-thin scrollbar-thumb-neutral-600 mb-2">
+						<option>Loading versions...</option>
+					</select>
 
-                    <div class="flex items-center gap-4 text-xs text-neutral-400">
-                        <label class="flex items-center gap-2 cursor-pointer hover:text-white">
-                            <input type="checkbox" id="showSnapshots" class="rounded bg-neutral-700 border-neutral-600 text-green-500 focus:ring-0">
-                            Show Snapshots
-                        </label>
-                        <label class="flex items-center gap-2 cursor-pointer hover:text-white">
-                            <input type="checkbox" id="showHistorical" class="rounded bg-neutral-700 border-neutral-600 text-green-500 focus:ring-0">
-                            Show Alpha/Beta
-                        </label>
-                    </div>
-                </div>
+					<div class="flex items-center gap-4 text-xs text-neutral-400">
+						<label class="flex items-center gap-2 cursor-pointer hover:text-white">
+							<input type="checkbox" id="showSnapshots" class="rounded bg-neutral-700 border-neutral-600 text-green-500 focus:ring-0">
+							Show Snapshots
+						</label>
+						<label class="flex items-center gap-2 cursor-pointer hover:text-white">
+							<input type="checkbox" id="showHistorical" class="rounded bg-neutral-700 border-neutral-600 text-green-500 focus:ring-0">
+							Show Alpha/Beta
+						</label>
+					</div>
+				</div>
 
-                <div class="pt-4 flex justify-end gap-2">
-                    <button type="button" id="closeModalBtn" class="px-4 py-2 hover:bg-neutral-700 rounded text-sm">Cancel</button>
-                    <button type="submit" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded font-semibold text-sm">Save Profile</button>
-                </div>
-            </form>
-        </div>
-    </div>
+				<div class="pt-4 flex justify-end gap-2">
+					<button type="button" id="closeModalBtn" class="px-4 py-2 hover:bg-neutral-700 rounded text-sm">Cancel</button>
+					<button type="submit" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded font-semibold text-sm">Save Profile</button>
+				</div>
+			</form>
+		</div>
+	</div>
 
-    <!-- Account Modal -->
-    <div id="accountModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
-        <!-- Backdrop -->
-        <div id="accountModalOverlay" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
-        
-        <!-- Modal Content -->
-        <div id="accountModalContent" class="relative bg-neutral-800 rounded-lg w-full max-w-2xl p-6 shadow-2xl border border-neutral-600 flex flex-col h-[600px] transform transition-all scale-100 opacity-100 z-10">
-            <div class="flex justify-between items-center mb-6 border-b border-neutral-700 pb-4">
-                <h3 class="text-2xl font-bold text-white">Account Manager</h3>
-                <button id="closeAccountModalBtn" class="text-neutral-400 hover:text-white text-2xl font-bold focus:outline-none">&times;</button>
-            </div>
-            
-            <div class="flex-1 flex gap-6 overflow-hidden">
-                <!-- Left: Account List -->
-                 <div class="w-1/2 flex flex-col overflow-hidden">
-                    <h4 class="font-bold text-neutral-400 mb-2 text-sm uppercase">Saved Accounts</h4>
-                    <div id="savedAccountsList" class="flex-1 overflow-y-auto space-y-2 pr-2">
-                        <!-- Account Items Generated JS -->
-                        <div class="text-center text-neutral-500 mt-10 italic">No saved accounts</div>
-                    </div>
-                 </div>
+	<!-- Account Modal -->
+	<div id="accountModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
+		<!-- Backdrop -->
+		<div id="accountModalOverlay" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+		
+		<!-- Modal Content -->
+		<div id="accountModalContent" class="relative bg-neutral-800 rounded-lg w-full max-w-2xl p-6 shadow-2xl border border-neutral-600 flex flex-col h-[600px] transform transition-all scale-100 opacity-100 z-10">
+			<div class="flex justify-between items-center mb-6 border-b border-neutral-700 pb-4">
+				<h3 class="text-2xl font-bold text-white">Account Manager</h3>
+				<button id="closeAccountModalBtn" class="text-neutral-400 hover:text-white text-2xl font-bold focus:outline-none">&times;</button>
+			</div>
+			
+			<div class="flex-1 flex gap-6 overflow-hidden">
+				<!-- Left: Account List -->
+				 <div class="w-1/2 flex flex-col overflow-hidden">
+					<h4 class="font-bold text-neutral-400 mb-2 text-sm uppercase">Saved Accounts</h4>
+					<div id="savedAccountsList" class="flex-1 overflow-y-auto space-y-2 pr-2">
+						<!-- Account Items Generated JS -->
+						<div class="text-center text-neutral-500 mt-10 italic">No saved accounts</div>
+					</div>
+				 </div>
 
-                 <!-- Right: Add Actions -->
-                 <div class="w-1/2 flex flex-col border-l border-neutral-700 pl-6">
-                    <h4 class="font-bold text-neutral-400 mb-4 text-sm uppercase">Add New Account</h4>
-                    
-                    <div class="space-y-6">
-                        <!-- Microsoft -->
-                        <div>
-                            <div class="text-sm font-semibold mb-2">Microsoft Account</div>
-                            <button id="msLoginBtn" class="w-full bg-green-700 hover:bg-green-600 text-white font-bold py-3 px-4 rounded flex items-center justify-center gap-2 transition shadow-lg">
-                                <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M11.5 11.5H0V0h11.5v11.5zm12.5 0H12.5V0H24v11.5zM11.5 24H0V12.5h11.5V24zm12.5 0H12.5V12.5H24V24z"/></svg>
-                                Sign in with Microsoft
-                            </button>
-                        </div>
+				 <!-- Right: Add Actions -->
+				 <div class="w-1/2 flex flex-col border-l border-neutral-700 pl-6">
+					<h4 class="font-bold text-neutral-400 mb-4 text-sm uppercase">Add New Account</h4>
+					
+					<div class="space-y-6">
+						<!-- Microsoft -->
+						<div>
+							<div class="text-sm font-semibold mb-2">Microsoft Account</div>
+							<button id="msLoginBtn" class="w-full bg-green-700 hover:bg-green-600 text-white font-bold py-3 px-4 rounded flex items-center justify-center gap-2 transition shadow-lg">
+								<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M11.5 11.5H0V0h11.5v11.5zm12.5 0H12.5V0H24v11.5zM11.5 24H0V12.5h11.5V24zm12.5 0H12.5V12.5H24V24z"/></svg>
+								Sign in with Microsoft
+							</button>
+						</div>
 
-                        <!-- Divider -->
-                        <div class="relative flex py-2 items-center">
-                            <div class="flex-grow border-t border-neutral-600"></div>
-                            <span class="flex-shrink mx-4 text-neutral-500 text-xs">OR</span>
-                            <div class="flex-grow border-t border-neutral-600"></div>
-                        </div>
+						<!-- Divider -->
+						<div class="relative flex py-2 items-center">
+							<div class="flex-grow border-t border-neutral-600"></div>
+							<span class="flex-shrink mx-4 text-neutral-500 text-xs">OR</span>
+							<div class="flex-grow border-t border-neutral-600"></div>
+						</div>
 
-                        <!-- Offline -->
-                        <div>
-                            <div class="text-sm font-semibold mb-2">Offline Account</div>
-                            <div class="flex flex-col gap-2">
-                                <input type="text" id="offlineNameInput" class="bg-neutral-700 text-white border border-neutral-600 rounded p-3 focus:border-green-500 focus:outline-none placeholder-neutral-400" placeholder="Enter Username">
-                                <button id="setOfflineBtn" class="bg-neutral-600 hover:bg-neutral-500 text-white font-bold py-2 rounded transition">
-                                    Login Offline
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                 </div>
-            </div>
-            
-        </div>
-    </div>
+						<!-- Offline -->
+						<div>
+							<div class="text-sm font-semibold mb-2">Offline Account</div>
+							<div class="flex flex-col gap-2">
+								<input type="text" id="offlineNameInput" class="bg-neutral-700 text-white border border-neutral-600 rounded p-3 focus:border-green-500 focus:outline-none placeholder-neutral-400" placeholder="Enter Username">
+								<button id="setOfflineBtn" class="bg-neutral-600 hover:bg-neutral-500 text-white font-bold py-2 rounded transition">
+									Login Offline
+								</button>
+							</div>
+						</div>
+					</div>
+				 </div>
+			</div>
+			
+		</div>
+	</div>
 
-    <!-- Confirm Modal -->
-    <div id="confirmModal" class="fixed inset-0 z-[60] hidden flex items-center justify-center">
-        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
-        <div class="relative bg-neutral-800 rounded-lg p-6 shadow-2xl border border-neutral-600 w-96 z-10 transform scale-100 transition-all">
-            <h3 class="text-xl font-bold text-white mb-2">Confirm Action</h3>
-            <p id="confirmMessage" class="text-neutral-300 mb-6 text-sm">Are you sure you want to proceed?</p>
-            <div class="flex justify-end gap-3">
-                <button id="confirmCancelBtn" class="px-4 py-2 text-neutral-400 hover:text-white hover:bg-neutral-700 rounded transition text-sm font-medium">Cancel</button>
-                <button id="confirmOkBtn" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded transition text-sm shadow-lg">Confirm</button>
-            </div>
-        </div>
-    </div>
+	<!-- Confirm Modal -->
+	<div id="confirmModal" class="fixed inset-0 z-[60] hidden flex items-center justify-center">
+		<div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+		<div class="relative bg-neutral-800 rounded-lg p-6 shadow-2xl border border-neutral-600 w-96 z-10 transform scale-100 transition-all">
+			<h3 class="text-xl font-bold text-white mb-2">Confirm Action</h3>
+			<p id="confirmMessage" class="text-neutral-300 mb-6 text-sm">Are you sure you want to proceed?</p>
+			<div class="flex justify-end gap-3">
+				<button id="confirmCancelBtn" class="px-4 py-2 text-neutral-400 hover:text-white hover:bg-neutral-700 rounded transition text-sm font-medium">Cancel</button>
+				<button id="confirmOkBtn" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold rounded transition text-sm shadow-lg">Confirm</button>
+			</div>
+		</div>
+	</div>
 
-    <!-- Settings Modal -->
-    <div id="settingsModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
-        <div id="settingsModalOverlay" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
-        <div class="relative bg-neutral-800 rounded-lg w-full max-w-2xl p-6 shadow-2xl border border-neutral-600 z-10">
-            <div class="flex justify-between items-center mb-6 border-b border-neutral-700 pb-4">
-                <h3 class="text-2xl font-bold text-white">Settings</h3>
-                <button id="closeSettingsBtn" class="text-neutral-400 hover:text-white text-2xl font-bold">&times;</button>
-            </div>
-            
-            <form id="settingsForm" class="space-y-6">
-                <!-- Game Directory -->
-                <div>
-                    <label class="block text-sm font-medium mb-2">Minecraft Directory (.minecraft folder)</label>
-                    <div class="flex gap-2">
-                        <input type="text" id="gamePathInput" class="flex-1 bg-neutral-700 border border-neutral-600 rounded p-2 focus:border-green-500 focus:outline-none text-sm" readonly>
-                        <button type="button" id="browseGamePathBtn" class="bg-neutral-600 hover:bg-neutral-500 px-4 py-2 rounded text-sm font-semibold">Browse</button>
-                    </div>
-                </div>
+	<!-- Settings Modal -->
+	<div id="settingsModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
+		<div id="settingsModalOverlay" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+		<div class="relative bg-neutral-800 rounded-lg w-full max-w-2xl p-6 shadow-2xl border border-neutral-600 z-10">
+			<div class="flex justify-between items-center mb-6 border-b border-neutral-700 pb-4">
+				<h3 class="text-2xl font-bold text-white">Settings</h3>
+				<button id="closeSettingsBtn" class="text-neutral-400 hover:text-white text-2xl font-bold">&times;</button>
+			</div>
+			
+			<div class="space-y-8">
+				<!-- Launcher Options Section -->
+				<div>
+					<h4 class="text-lg font-bold text-green-500 mb-4 uppercase tracking-wide">Launcher Options</h4>
+					<div class="space-y-4 pl-4">
+						<label class="flex items-center gap-3 cursor-pointer hover:text-white group">
+							<input type="checkbox" id="hideLauncherCheckbox" class="rounded bg-neutral-700 border-neutral-600 text-green-500 focus:ring-0 w-5 h-5">
+							<span class="text-sm">Hide launcher after successful game launch</span>
+						</label>
+					</div>
+				</div>
 
-                <!-- Java Path -->
-                <div>
-                    <label class="block text-sm font-medium mb-2">Java Path</label>
-                    <input type="text" id="javaPathInput" class="w-full bg-neutral-700 border border-neutral-600 rounded p-2 focus:border-green-500 focus:outline-none text-sm" placeholder="java">
-                    <p class="text-xs text-neutral-500 mt-1">Leave as 'java' to use system default, or specify full path to java executable</p>
-                </div>
+				<!-- Game Options Section -->
+				<div>
+					<h4 class="text-lg font-bold text-green-500 mb-4 uppercase tracking-wide">Game Options</h4>
+					<div class="space-y-6 pl-4">
+						<!-- Minecraft Directory -->
+						<div>
+							<label class="block text-sm font-medium mb-2">Minecraft Directory</label>
+							<div class="flex gap-2">
+								<input type="text" id="gamePathInput" class="flex-1 bg-neutral-700 border border-neutral-600 rounded p-2 focus:border-green-500 focus:outline-none text-sm" readonly>
+								<button id="browseGamePathBtn" class="bg-neutral-600 hover:bg-neutral-500 px-4 py-2 rounded text-sm font-semibold">Browse</button>
+							</div>
+							<p class="text-xs text-neutral-500 mt-1">.minecraft folder location</p>
+						</div>
 
-                <!-- RAM Allocation -->
-                <div>
-                    <label class="block text-sm font-medium mb-2">RAM Allocation (Memory)</label>
-                    <div class="flex items-center gap-3">
-                        <input type="range" id="ramSlider" min="512" max="16384" step="256" value="2048" class="flex-1 h-2 bg-neutral-700 rounded accent-green-500">
-                        <input type="number" id="ramInput" min="512" max="16384" step="256" value="2048" class="w-24 bg-neutral-700 border border-neutral-600 rounded p-2 focus:border-green-500 focus:outline-none text-sm text-center">
-                        <span class="text-sm font-medium w-12">MB</span>
-                    </div>
-                </div>
+						<!-- Java Path -->
+						<div>
+							<label class="block text-sm font-medium mb-2">Java Path</label>
+							<input type="text" id="javaPathInput" class="w-full bg-neutral-700 border border-neutral-600 rounded p-2 focus:border-green-500 focus:outline-none text-sm" placeholder="java">
+							<p class="text-xs text-neutral-500 mt-1">Leave as 'java' to use system default, or specify full path to java executable</p>
+						</div>
 
-                <div class="pt-4 flex justify-end gap-2 border-t border-neutral-700">
-                    <button type="button" id="cancelSettingsBtn" class="px-4 py-2 hover:bg-neutral-700 rounded text-sm">Cancel</button>
-                    <button type="submit" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded font-semibold text-sm">Save Settings</button>
-                </div>
-            </form>
-        </div>
-    </div>
+						<!-- RAM Allocation -->
+						<div>
+							<label class="block text-sm font-medium mb-2">RAM Allocation</label>
+							<div class="flex items-center gap-3">
+								<input type="range" id="ramSlider" min="512" max="16384" step="256" value="2048" class="flex-1 h-2 bg-neutral-700 rounded accent-green-500">
+								<input type="number" id="ramInput" min="512" max="16384" step="256" value="2048" class="w-24 bg-neutral-700 border border-neutral-600 rounded p-2 focus:border-green-500 focus:outline-none text-sm text-center">
+								<span class="text-sm font-medium w-12">MB</span>
+							</div>
+						</div>
+					</div>
+				</div>
 
-    <script type="module" src="../src/js/index.js"></script>
+				<!-- Action Buttons -->
+				<div class="pt-4 flex justify-end gap-2 border-t border-neutral-700">
+					<button id="cancelSettingsBtn" class="px-4 py-2 hover:bg-neutral-700 rounded text-sm">Cancel</button>
+					<button id="saveSettingsBtn" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded font-semibold text-sm">Save Settings</button>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script type="module" src="../src/js/index.js"></script>
 </body>
 </html>
