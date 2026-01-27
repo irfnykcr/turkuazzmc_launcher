@@ -1,13 +1,13 @@
 /* Custom scrollbar */
 ::-webkit-scrollbar { width: 8px; }
-::-webkit-scrollbar-track { background: #1f2937; }
-::-webkit-scrollbar-thumb { background: #4b5563; border-radius: 4px; }
+::-webkit-scrollbar-track { background: #181818; }
+::-webkit-scrollbar-thumb { background: #979797; border-radius: 4px; }
 ::-webkit-scrollbar-thumb:hover { background: #6b7280; }
 
 .loader {
     border: 3px solid #f3f3f3;
     border-radius: 50%;
-    border-top: 3px solid #3498db;
+    border-top: 3px solid #04a96d;
     width: 20px;
     height: 20px;
     -webkit-animation: spin 1s linear infinite; /* Safari */
