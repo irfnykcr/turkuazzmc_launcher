@@ -3,7 +3,7 @@
 import { profiles, selectedProfileIndex, setProfiles, renderProfileList, selectProfile, showCreateProfile,
 		addProfile, deleteProfile } from './profiles.js'
 
-import { currentAuth, savedAccounts, setSavedAccounts, setCurrentAuth, getCurrentAuth, updateAccountUI,
+import { currentAuth, savedAccounts, setSavedAccounts, setCurrentAuth, getCurrentAuth, getMCLCAuth, updateAccountUI,
 		renderAccountList, addAccountToState, removeAccountFromState } from './accounts.js'
 
 import { currentSettings, ramAllocation, setCurrentSettings, setRamAllocation, getRamAllocation,
@@ -281,10 +281,18 @@ async function handleSetOfflineAccount() {
 		return
 	}
 	
+	const generateUUID = () => {
+		return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+			const r = Math.random() * 16 | 0
+			const v = c === 'x' ? r : (r & 0x3 | 0x8)
+			return v.toString(16)
+		})
+	}
+	
 	const newAuth = {
 		type: 'offline',
 		name: name,
-		uuid: '00000000-0000-0000-0000-000000000000',
+		uuid: generateUUID(),
 		access_token: '',
 		client_token: '',
 		user_properties: '{}'
@@ -315,10 +323,7 @@ async function performMicrosoftLogin() {
 	isMicrosoftLoginInProgress = false
 	
 	if (res.success) {
-		const newAuth = {
-			type: 'ms',
-			...res.account
-		}
+		const newAuth = res.auth
 		addAccountToState(newAuth)
 		setCurrentAuth(newAuth)
 		await saveAllSettings()
@@ -419,6 +424,21 @@ function setupIpcListeners() {
 			instances[instanceId].button.title = `${instances[instanceId].profileName} (Closed)`
 		}
 	})
+	
+	window.api.onTokenRefreshed((auth) => {
+		console.log('[TOKEN] Refreshed token for:', auth.name)
+		setCurrentAuth(auth)
+		
+		const accounts = savedAccounts
+		const accIndex = accounts.findIndex(a => a.name === auth.name && a.type === 'ms')
+		if (accIndex !== -1) {
+			accounts[accIndex] = auth
+			setSavedAccounts(accounts)
+		}
+		
+		updateAccountUI()
+		renderAccountList()
+	})
 }
 
 async function loadSettings() {
@@ -452,10 +472,26 @@ async function loadSettings() {
 */
 async function loadVersions() {
 	console.log('[FRONTEND] Calling getVersions...')
-	versions = await window.api.getVersions()
-	console.log('[FRONTEND] Received versions:', versions ? versions.length : 0)
+	const result = await window.api.getVersions()
+	if (!result.success) {
+		showAlert(`Failed to fetch versions: ${result.error}`, 'error')
+		versions = []
+	} else {
+		versions = result.versions || []
+	}
+	console.log('[FRONTEND] Received versions:', versions.length)
+	
 	const select = document.getElementById('pVersion')
 	select.innerHTML = ''
+	
+	if (versions.length === 0) {
+		const opt = document.createElement('option')
+		opt.value = ''
+		opt.textContent = 'Failed to load versions'
+		opt.disabled = true
+		select.appendChild(opt)
+		return
+	}
 	
 	const showSnapshots = document.getElementById('showSnapshots').checked
 	const showHistorical = document.getElementById('showHistorical').checked
@@ -593,21 +629,25 @@ async function launchGame() {
 	}
 
 	const p = profiles[selectedProfileIndex]
+	
+	const diskCheck = await window.api.checkDiskSpace()
+	if (diskCheck.success && !diskCheck.hasSpace) {
+		showAlert(`Insufficient disk space: ${diskCheck.availableGB}GB available, ${diskCheck.requiredGB}GB required`, 'error')
+		return
+	}
+	
 	const instanceId = Date.now().toString()
 	
 	createConsoleInstance(instanceId, p.name)
 	
 	document.getElementById('statusMessage').textContent = `Launching ${p.name}...`
 	
-	let finalAuth = { ...getCurrentAuth() }
-	if (finalAuth.type === 'offline') {
-		finalAuth = {
-			access_token: "",
-			client_token: "",
-			uuid: "00000000-0000-0000-0000-000000000000",
-			name: finalAuth.name,
-			user_properties: {}
-		}
+	const finalAuth = getMCLCAuth()
+	if (!finalAuth) {
+		showAlert('Invalid account configuration', 'error')
+		removeConsoleInstance(instanceId)
+		document.getElementById('statusMessage').textContent = 'Ready to launch'
+		return
 	}
 
 	const options = {
@@ -620,6 +660,14 @@ async function launchGame() {
 		javaPath: getCurrentSettings().javaPath
 	}
 
-	await window.api.launch(options)
+	const result = await window.api.launch(options)
+	
+	if (!result.success) {
+		showAlert(`Launch failed: ${result.error}`, 'error')
+		removeConsoleInstance(instanceId)
+		document.getElementById('statusMessage').textContent = 'Ready to launch'
+		return
+	}
+	
 	document.getElementById('statusMessage').textContent = 'Ready to launch'
 }

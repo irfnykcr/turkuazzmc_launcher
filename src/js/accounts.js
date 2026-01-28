@@ -25,6 +25,39 @@ export function getCurrentAuth() {
 }
 
 /*
+	@returns {Object} MCLC-compatible auth object
+*/
+export function getMCLCAuth() {
+	if (!currentAuth) return null
+	
+	if (currentAuth.type === 'offline') {
+		return {
+			type: 'offline',
+			access_token: "",
+			client_token: "",
+			uuid: currentAuth.uuid,
+			name: currentAuth.name,
+			user_properties: {}
+		}
+	}
+	
+	if (currentAuth.type === 'ms') {
+		return {
+			type: 'ms',
+			access_token: currentAuth.access_token,
+			client_token: currentAuth.client_token,
+			uuid: currentAuth.uuid,
+			name: currentAuth.name,
+			user_properties: {},
+			refresh_token: currentAuth.refresh_token || '',
+			expires_at: currentAuth.expires_at || 0
+		}
+	}
+	
+	return null
+}
+
+/*
 	@returns {void}
 */
 export function updateAccountUI() {
