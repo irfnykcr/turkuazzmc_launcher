@@ -1,18 +1,32 @@
 export let savedAccounts = []
 export let currentAuth = null
 
+/*
+	@param {Array} accounts
+	@returns {void}
+*/
 export function setSavedAccounts(accounts) {
 	savedAccounts = accounts
 }
 
+/*
+	@param {Object} auth
+	@returns {void}
+*/
 export function setCurrentAuth(auth) {
 	currentAuth = auth
 }
 
+/*
+	@returns {Object}
+*/
 export function getCurrentAuth() {
 	return currentAuth
 }
 
+/*
+	@returns {void}
+*/
 export function updateAccountUI() {
 	if(!currentAuth) {
 		document.getElementById('accountName').textContent = "No Account"
@@ -42,6 +56,9 @@ export function updateAccountUI() {
 	avatar.className = `w-8 h-8 rounded border-2 ${avatarBorder}`
 }
 
+/*
+	@returns {void}
+*/
 export function renderAccountList() {
 	const container = document.getElementById('savedAccountsList')
 	container.innerHTML = ''
@@ -98,13 +115,21 @@ export function renderAccountList() {
 	createGroup('Offline Accounts', offlineAccs)
 }
 
-function isCurrentAccount(acc) {
+/*
+	@param {Object} acc
+	@returns {boolean}
+*/
+export function isCurrentAccount(acc) {
 	if (!currentAuth || acc.type !== currentAuth.type) return false
 	if (acc.type === 'ms') return acc.uuid === currentAuth.uuid
 	if (acc.type === 'offline') return acc.name === currentAuth.name
 	return false
 }
 
+/*
+	@param {Object} acc
+	@returns {void}
+*/
 export function addAccountToState(acc) {
 	if(acc.type === 'ms') {
 		const idx = savedAccounts.findIndex(a => a.type === 'ms' && a.uuid === acc.uuid)
@@ -123,6 +148,10 @@ export function addAccountToState(acc) {
 	}
 }
 
+/*
+	@param {Object} acc
+	@returns {Array}
+*/
 export function removeAccountFromState(acc) {
 	if(acc.type === 'ms') {
 		savedAccounts = savedAccounts.filter(a => !(a.type === 'ms' && a.uuid === acc.uuid))

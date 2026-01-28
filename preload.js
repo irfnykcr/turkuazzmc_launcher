@@ -2,6 +2,7 @@ const { contextBridge, ipcRenderer } = require('electron')
 
 contextBridge.exposeInMainWorld('api', {
 	loginMicrosoft: () => ipcRenderer.invoke('login-microsoft'),
+	cancelMicrosoftLogin: () => ipcRenderer.invoke('cancel-microsoft-login'),
 	launch: (options) => ipcRenderer.invoke('launch-game', options),
 	getSettings: () => ipcRenderer.invoke('get-settings'),
 	saveSettings: (settings) => ipcRenderer.invoke('save-settings', settings),

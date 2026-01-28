@@ -13,6 +13,7 @@ import { currentSettings, ramAllocation, setCurrentSettings, setRamAllocation, g
 let versions = []
 let instances = {}
 let activeInstanceId = null
+let isMicrosoftLoginInProgress = false
 
 document.addEventListener('DOMContentLoaded', async () => {
 	console.log('[FRONTEND] DOMContentLoaded')
@@ -30,6 +31,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 	console.log('[FRONTEND] Initialization complete')
 })
 
+/*
+	@returns {void}
+*/
 function setupEventListeners() {
 	document.getElementById('createProfileBtn').addEventListener('click', showCreateProfile)
 	document.getElementById('profileForm').addEventListener('submit', handleSaveProfile)
@@ -53,11 +57,19 @@ function setupEventListeners() {
 	})
 	
 	const closeModal = () => {
+		if (isMicrosoftLoginInProgress) {
+			window.api.cancelMicrosoftLogin()
+			isMicrosoftLoginInProgress = false
+		}
 		accModal.classList.add('hidden')
 	}
 
 	document.getElementById('closeAccountModalBtn').addEventListener('click', closeModal)
-	accOverlay.addEventListener('click', closeModal)
+	accOverlay.addEventListener('click', (e) => {
+		if (!isMicrosoftLoginInProgress) {
+			closeModal()
+		}
+	})
 	
 	document.getElementById('msLoginBtn').addEventListener('click', () => performMicrosoftLogin())
 	document.getElementById('setOfflineBtn').addEventListener('click', handleSetOfflineAccount)
@@ -92,9 +104,39 @@ function setupEventListeners() {
 	})
 
 	setupConfirmModal()
+	setupEscapeKeyHandler()
+}
+
+/*
+	@returns {void}
+*/
+function setupEscapeKeyHandler() {
+	document.addEventListener('keydown', (e) => {
+		if (e.key === 'Escape') {
+			const settingsModal = document.getElementById('settingsModal')
+			const accountModal = document.getElementById('accountModal')
+			const profileModal = document.getElementById('profileModal')
+			const confirmModal = document.getElementById('confirmModal')
+			
+			if (!settingsModal.classList.contains('hidden')) {
+				closeSettings()
+			} else if (!accountModal.classList.contains('hidden')) {
+				if (!isMicrosoftLoginInProgress) {
+					accountModal.classList.add('hidden')
+				}
+			} else if (!profileModal.classList.contains('hidden')) {
+				profileModal.classList.add('hidden')
+			} else if (!confirmModal.classList.contains('hidden')) {
+				document.getElementById('confirmCancelBtn').click()
+			}
+		}
+	})
 }
 
 let confirmCallback = null
+/*
+	@returns {void}
+*/
 function setupConfirmModal() {
 	const modal = document.getElementById('confirmModal')
 	const close = () => {
@@ -116,10 +158,55 @@ function setupConfirmModal() {
 	})
 }
 
+/*
+	@param {string} msg - The confirmation message
+	@param {function} callback - The function to call if confirmed
+	@returns {void}
+*/
 function showConfirm(msg, callback) {
 	document.getElementById('confirmMessage').textContent = msg
 	confirmCallback = callback
 	document.getElementById('confirmModal').classList.remove('hidden')
+}
+
+/*
+	@param {string} msg - The message to display
+	@param {string} type - 'info' | 'success' | 'error'
+	@returns {void}
+*/
+function showAlert(msg, type = 'info') {
+	const container = document.getElementById('toastContainer')
+	const toast = document.createElement('div')
+	toast.className = 'pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg border transform transition-all duration-300 opacity-0 translate-x-full'
+	
+	if (type === 'error') {
+		toast.className += ' bg-red-900 border-red-700 text-red-100'
+	} else if (type === 'success') {
+		toast.className += ' bg-green-900 border-green-700 text-green-100'
+	} else {
+		toast.className += ' bg-neutral-800 border-neutral-600 text-neutral-100'
+	}
+	
+	toast.innerHTML = `
+		<span class="flex-1 text-sm">${msg}</span>
+		<button class="text-current hover:opacity-70 text-xl font-bold leading-none">&times;</button>
+	`
+	
+	container.appendChild(toast)
+	
+	const closeBtn = toast.querySelector('button')
+	const removeToast = () => {
+		toast.classList.add('opacity-0', 'translate-x-full')
+		setTimeout(() => toast.remove(), 300)
+	}
+	
+	closeBtn.onclick = removeToast
+	
+	setTimeout(() => {
+		toast.classList.remove('opacity-0', 'translate-x-full')
+	}, 10)
+	
+	setTimeout(removeToast, 5000)
 }
 
 
@@ -135,6 +222,10 @@ window.removeProfileHandler = async (index) => {
 	})
 }
 
+/*
+	@param {Event} e
+	@returns {Promise<void>}
+*/
 async function handleSaveProfile(e) {
 	e.preventDefault()
 	const name = document.getElementById('pName').value
@@ -176,6 +267,9 @@ window.removeAccountHandler = async (acc) => {
 	})
 }
 
+/*
+	@returns {Promise<void>}
+*/
 async function handleSetOfflineAccount() {
 	const nameInput = document.getElementById('offlineNameInput')
 	const name = nameInput.value.trim()
@@ -206,13 +300,19 @@ async function handleSetOfflineAccount() {
 	nameInput.value = ''
 }
 
+/*
+	@returns {Promise<void>}
+*/
 async function performMicrosoftLogin() {
 	const btn = document.getElementById('msLoginBtn')
 	const originalText = btn.innerHTML
 	btn.textContent = 'Please wait...'
 	btn.disabled = true
+	isMicrosoftLoginInProgress = true
 	
 	const res = await window.api.loginMicrosoft()
+	
+	isMicrosoftLoginInProgress = false
 	
 	if (res.success) {
 		const newAuth = {
@@ -225,8 +325,9 @@ async function performMicrosoftLogin() {
 		
 		updateAccountUI()
 		renderAccountList()
-	} else {
-		showConfirm(`Login failed: ${res.error}`, () => {})
+		showAlert('Microsoft login successful!', 'success')
+	} else if (res.error) {
+		showAlert(`Login failed: ${res.error}`, 'error')
 	}
 	
 	btn.innerHTML = originalText
@@ -281,7 +382,9 @@ async function handleSaveSettings() {
 }
 
 
-
+/*
+	@returns {Promise<void>}
+*/
 async function saveAllSettings() {
 	const settings = await window.api.getSettings()
 	settings.profiles = profiles
@@ -290,6 +393,9 @@ async function saveAllSettings() {
 	await window.api.saveSettings(settings)
 }
 
+/*
+	@returns {void}
+*/
 function setupIpcListeners() {
 	window.api.onLog((data) => {
 		console.log('[IPC] Received log:', data)
@@ -341,6 +447,9 @@ async function loadSettings() {
 	renderProfileList()
 }
 
+/*
+	@returns {Promise<void>}
+*/
 async function loadVersions() {
 	console.log('[FRONTEND] Calling getVersions...')
 	versions = await window.api.getVersions()
@@ -367,6 +476,11 @@ async function loadVersions() {
 	})
 }
 
+/*
+	@param {string} instanceId
+	@param {string} profileName
+	@returns {void}
+*/
 function createConsoleInstance(instanceId, profileName) {
 	const consoleButtonsContainer = document.getElementById('consoleButtons')
 	const logsArea = document.getElementById('logsArea')
@@ -412,6 +526,10 @@ function createConsoleInstance(instanceId, profileName) {
 	switchToInstance(instanceId)
 }
 
+/*
+	@param {string} instanceId
+	@returns {void}
+*/
 function switchToInstance(instanceId) {
 	if (!instances[instanceId]) return
 	
@@ -439,6 +557,10 @@ function switchToInstance(instanceId) {
 	})
 }
 
+/*
+	@param {string} instanceId
+	@returns {void}
+*/
 function removeConsoleInstance(instanceId) {
 	if (!instances[instanceId]) return
 	
@@ -457,6 +579,9 @@ function removeConsoleInstance(instanceId) {
 	}
 }
 
+/*
+	@returns {Promise<void>}
+*/
 async function launchGame() {
 	if (selectedProfileIndex === -1) return
 

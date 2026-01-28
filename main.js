@@ -26,8 +26,11 @@ const store = new Store({
   }
 })
 
-store.reset() // --- DEBUG --- keep it
-
+/*
+	@param {string} gamePath
+	@param {string} message
+	@returns {void}
+*/
 function writeLog(gamePath, message) {
 	try {
 		const logPath = path.join(gamePath, 'turkuazz_logs.txt')
@@ -225,6 +228,21 @@ ipcMain.handle('login-microsoft', async () => {
 		console.error("Login failed", err)
 		return { success: false, error: err.message || JSON.stringify(err) }
 	}
+})
+
+ipcMain.handle('cancel-microsoft-login', () => {
+	BrowserWindow.getAllWindows().forEach((w) => {
+		if (w !== win && (
+				w.getTitle().includes('Microsoft') ||
+				w.getTitle().includes('Sign')   ||
+				w.getTitle().includes('Login')     ||
+				w.getTitle().includes('Minecraft')
+				)) {
+			w.close()
+			return { cancelled: true }
+		}
+	})
+	return { cancelled: false }
 })
 
 ipcMain.handle('launch-game', async (event, options) => {

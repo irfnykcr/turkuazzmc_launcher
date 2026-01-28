@@ -1,10 +1,17 @@
 export let profiles = []
 export let selectedProfileIndex = -1
 
+/*
+	@param {Array} newProfiles
+	@returns {void}
+*/
 export function setProfiles(newProfiles) {
 	profiles = newProfiles
 }
 
+/*
+	@returns {void}
+*/
 export function renderProfileList() {
 	const list = document.getElementById('profileList')
 	list.innerHTML = ''
@@ -36,6 +43,10 @@ export function renderProfileList() {
 	})
 }
 
+/*
+	@param {number} index
+	@returns {void}
+*/
 export function selectProfile(index) {
 	selectedProfileIndex = index
 	const p = profiles[index]
@@ -45,17 +56,35 @@ export function selectProfile(index) {
 	renderProfileList()
 }
 
+/*
+	@returns {void}
+*/
 export function showCreateProfile() {
 	document.getElementById('profileModal').classList.remove('hidden')
 	document.getElementById('pName').value = `My Profile ${profiles.length + 1}`
 }
 
+/*
+	@returns {void}
+*/
+export function closeCreateProfile() {
+	document.getElementById('profileModal').classList.add('hidden')
+}
+
+/*
+	@param {Object} profile
+	@returns {void}
+*/
 export function addProfile(profile) {
 	profiles.push(profile)
 	renderProfileList()
 	selectProfile(profiles.length - 1)
 }
 
+/*
+	@param {number} index
+	@returns {void}
+*/
 export function deleteProfile(index) {
 	profiles.splice(index, 1)
 	
