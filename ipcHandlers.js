@@ -4,7 +4,25 @@ const fs = require('fs')
 const { Client } = require('minecraft-launcher-core')
 const msmc = require('msmc')
 const utils = require('./utils')
+const UpdateManager = require('./updaterMain.js')
 
+const logger = {
+	debug: (message) => {
+		const timestamp = new Date().toISOString()
+		console.log(`[ipcHandlers][DEBUG - ${timestamp}] ${message}`)
+	},
+	info: (message) => {
+		const timestamp = new Date().toISOString()
+		console.log(`[ipcHandlers][INFO - ${timestamp}] ${message}`)
+	},
+	error: (message) => {
+		const timestamp = new Date().toISOString()
+		console.error(`[ipcHandlers][ERROR - ${timestamp}] ${message}`)
+	}
+}
+
+let updateManager = null
+const SERVER_ENDPOINT = "updates.turkuazz.vip"
 /*
 	@param {import('electron').IpcMain} ipcMain
 	@param {import('electron-store')} store
@@ -12,8 +30,40 @@ const utils = require('./utils')
 */
 function registerHandlers(ipcMain, store, win) {
 	
+	updateManager = new UpdateManager(win)
+	updateManager.setServerEndpoint(SERVER_ENDPOINT)
+	
+	updateManager.checkForUpdates().then((hasUpdate) => {
+		if (!hasUpdate) {return}
+		if (!app.isPackaged) {
+			logger.info(`Update available, but in development mode - skipping update page`)
+			return
+		}
+		logger.info(`Update available, showing update page...`)
+		win.loadFile(path.join(__dirname, 'views/updater.html'))
+		return
+	})
+
+	
+	ipcMain.handle('download-update', async (event) => {
+		if (updateManager) {
+			return await updateManager.downloadUpdate()
+		}
+		return false
+	})
+
+	ipcMain.handle('install-update', async (event) => {
+		if (updateManager) {
+			return await updateManager.installUpdate()
+		}
+		return false
+	})
+
+
+
+
 	ipcMain.handle('get-settings', async () => {
-		console.log('[get-settings] Called')
+		logger.info(`[get-settings] Called`)
 		
 		try {
 			const javaPath = store.get('javaPath')
@@ -30,52 +80,52 @@ function registerHandlers(ipcMain, store, win) {
 				accounts: store.get('accounts') || []
 			}
 		
-		console.log('[get-settings] gamePath:', settings.gamePath)
-		
-		try {
-			const profilesPath = path.join(settings.gamePath, 'launcher_profiles.json')
-			console.log('[get-settings] Looking for:', profilesPath)
+			logger.debug(`[get-settings] javaPath: ${settings.javaPath}`)
 			
-			if (fs.existsSync(profilesPath)) {
-				console.log('[get-settings] File exists, reading...')
-				const content = fs.readFileSync(profilesPath, 'utf-8')
-				const data = JSON.parse(content)
-				const imported = []
+			try {
+				const profilesPath = path.join(settings.gamePath, 'launcher_profiles.json')
+				logger.debug(`[get-settings] Looking for: ${profilesPath}`)
+				
+				if (fs.existsSync(profilesPath)) {
+					logger.info(`[get-settings] File exists, reading...`)
+					const content = fs.readFileSync(profilesPath, 'utf-8')
+					const data = JSON.parse(content)
+					const imported = []
 
-				if (data.profiles) {
-					console.log('[get-settings] Found profiles object, processing...')
-					for (const [id, p] of Object.entries(data.profiles)) {
-						console.log('[get-settings] Processing profile:', id, 'type:', p.type, 'version:', p.lastVersionId)
+					if (data.profiles) {
+						logger.info(`[get-settings] Found profiles object, processing...`)
+						for (const [id, p] of Object.entries(data.profiles)) {
+							logger.debug(`[get-settings] Processing profile: ${id}, type: ${p.type}, version: ${p.lastVersionId}`)
+							
+							if (p.type === 'latest-release' || p.type === 'latest-snapshot') {
+								continue
+							}
+
+							if (p.lastVersionId) {
+								imported.push({
+									name: p.name || `Profile (${id.substring(0,6)})`,
+									version: p.lastVersionId,
+									type: 'offline', 
+									auth: null
+								})
+							}
+						}
 						
-						if (p.type === 'latest-release' || p.type === 'latest-snapshot') {
-							continue
-						}
-
-						if (p.lastVersionId) {
-							imported.push({
-								name: p.name || `Profile (${id.substring(0,6)})`,
-								version: p.lastVersionId,
-								type: 'offline', 
-								auth: null
-							})
-						}
+						logger.debug(`[get-settings] Imported profiles: ${JSON.stringify(imported)}`)
 					}
 					
-					console.log('[get-settings] Imported count:', imported.length)
+					settings.profiles = imported
+				} else {
+					logger.info(`[get-settings] File does not exist`)
 				}
-				
-				settings.profiles = imported
-			} else {
-				console.log('[get-settings] File does not exist')
+			} catch (e) {
+				logger.error(`[get-settings] Failed to read or parse launcher_profiles.json: ${e.message}`)
 			}
-		} catch (e) {
-			console.error('[get-settings] Failed to import profiles:', e)
-		}
-		
-		console.log('[get-settings] Returning settings with', settings.profiles.length, 'profiles')
+			
+			logger.info(`[get-settings] Returning settings with ${settings.profiles.length} profiles`)
 			return settings
 		} catch (error) {
-			console.error('[get-settings] Error:', error)
+			logger.error(`[get-settings] Error: ${error}`)
 			return {
 				gamePath: store.get('gamePath'),
 				javaPath: 'java',
@@ -130,17 +180,17 @@ function registerHandlers(ipcMain, store, win) {
 				})
 				
 				fs.writeFileSync(profilesPath, JSON.stringify(launcherData, null, 2), 'utf-8')
-				console.log('[save-settings] Synced', newSettings.profiles.length, 'profiles to launcher_profiles.json')
+				logger.info(`[save-settings] Synced ${newSettings.profiles.length} profiles to launcher_profiles.json`)
 			} catch (e) {
-				console.error('[save-settings] Failed to sync to launcher_profiles.json:', e)
+				logger.error(`[save-settings] Failed to sync to launcher_profiles.json: ${e}`)
 			}
 		} else {
-			console.log('[save-settings] No profiles provided, skipping launcher_profiles.json update')
+			logger.info(`[save-settings] No profiles provided, skipping launcher_profiles.json update`)
 		}
 		
 			return { success: true }
 		} catch (error) {
-			console.error('[save-settings] Error saving settings:', error)
+			logger.error(`[save-settings] Error saving settings: ${error}`)
 			return { success: false, error: error.message }
 		}
 	})
@@ -156,13 +206,13 @@ function registerHandlers(ipcMain, store, win) {
 	})
 
 	ipcMain.handle('get-installed-versions', async () => {
-		console.log('[get-installed-versions] Called')
+		logger.info(`[get-installed-versions] Called`)
 		try {
 			const gamePath = store.get('gamePath')
 			const versionsPath = path.join(gamePath, 'versions')
 			
 			if (!fs.existsSync(versionsPath)) {
-				console.log('[get-installed-versions] Versions folder does not exist')
+				logger.info(`[get-installed-versions] Versions folder does not exist`)
 				return []
 			}
 			
@@ -171,18 +221,18 @@ function registerHandlers(ipcMain, store, win) {
 				return fs.existsSync(versionJsonPath)
 			})
 			
-			console.log('[get-installed-versions] Found', versionDirs.length, 'installed versions')
+			logger.info(`[get-installed-versions] Found ${versionDirs.length} installed versions`)
 			return versionDirs
 		} catch (error) {
-			console.error('[get-installed-versions] Error:', error)
+			logger.error(`[get-installed-versions] Error: ${error}`)
 			return []
 		}
 	})
 
 	ipcMain.handle('get-versions', async () => {
-		console.log('[get-versions] Called')
+		logger.info(`[get-versions] Called`)
 		try {
-			console.log('[get-versions] Fetching manifest...')
+			logger.info(`[get-versions] Fetching manifest...`)
 			const response = await fetch('https://piston-meta.mojang.com/mc/game/version_manifest_v2.json')
 			
 			if (!response.ok) {
@@ -190,10 +240,10 @@ function registerHandlers(ipcMain, store, win) {
 			}
 			
 			const data = await response.json()
-			console.log('[get-versions] Received', data.versions ? data.versions.length : 0, 'versions')
+			logger.info(`[get-versions] Received ${data.versions ? data.versions.length : 0} versions`)
 			return { success: true, versions: data.versions || [] }
 		} catch (error) {
-			console.error('[get-versions] Failed to fetch versions:', error)
+			logger.error(`[get-versions] Failed to fetch versions: ${error}`)
 			return { success: false, error: error.message, versions: [] }
 		}
 	})
@@ -210,24 +260,24 @@ function registerHandlers(ipcMain, store, win) {
 				hasSpace: spaceInfo.hasSpace
 			}
 		} catch (error) {
-			console.error('[check-disk-space] Error:', error)
+			logger.error(`[check-disk-space] Error: ${error}`)
 			return { success: false, error: error.message, hasSpace: true }
 		}
 	})
 
 	ipcMain.handle('login-microsoft', async () => {
 		try {
-			console.log('[login-microsoft] Starting Microsoft login flow')
+			logger.info(`[login-microsoft] Starting Microsoft login flow`)
 			await session.defaultSession.clearStorageData({
 				storages: ['cookies', 'localstorage', 'caches']
 			})
 			
 			const authManager = new msmc.Auth("select")
-			console.log('[login-microsoft] Launching auth window...')
+			logger.info(`[login-microsoft] Launching auth window...`)
 			const xboxManager = await authManager.launch("electron")
 			const token = await xboxManager.getMinecraft()
 			const mclcToken = token.mclc()
-			console.log('[login-microsoft] Login successful for user:', mclcToken.name)
+			logger.info(`[login-microsoft] Login successful for user: ${mclcToken.name}`)
 			const r = {
 				success: true,
 				account: {
@@ -244,7 +294,7 @@ function registerHandlers(ipcMain, store, win) {
 			}
 			return JSON.parse(JSON.stringify(r)) 
 		} catch (err) {
-			console.error("Login failed", err)
+			logger.error(`Login failed: ${err}`)
 			return { success: false, error: err.message || JSON.stringify(err) }
 		}
 	})
@@ -274,7 +324,7 @@ function registerHandlers(ipcMain, store, win) {
 			}
 			return JSON.parse(JSON.stringify(r)) 
 		} catch (err) {
-			console.error('[refresh-token] Failed:', err)
+			logger.error(`[refresh-token] Failed: ${err}`)
 			return { success: false, error: err.message || JSON.stringify(err) }
 		}
 	})
@@ -306,7 +356,7 @@ function registerHandlers(ipcMain, store, win) {
 
 			if (options.auth.type === 'ms' && options.auth.expires_at) {
 				if (Date.now() >= options.auth.expires_at - (5 * 60 * 1000)) {
-					console.log('[launch-game] Token expired or expiring soon, refreshing...')
+					logger.info(`[launch-game] Token expired or expiring soon, refreshing...`)
 					utils.writeLog(gamePath, `INFO | Instance: ${instanceId} | Refreshing expired token`)
 					
 					try {
@@ -337,7 +387,7 @@ function registerHandlers(ipcMain, store, win) {
 						win.webContents.send('token-refreshed', options.auth)
 						utils.writeLog(gamePath, `INFO | Instance: ${instanceId} | Token refreshed successfully`)
 					} catch (refreshErr) {
-						console.error('[launch-game] Token refresh failed:', refreshErr)
+						logger.error(`[launch-game] Token refresh failed: ${refreshErr}`)
 						utils.writeLog(gamePath, `ERROR | Instance: ${instanceId} | Token refresh failed: ${refreshErr.message}`)
 						return { success: false, error: 'Authentication expired. Please login again.' }
 					}
@@ -367,11 +417,11 @@ function registerHandlers(ipcMain, store, win) {
 							customVersion = options.version
 							versionNumber = vData.inheritsFrom
 							type = "release"
-							console.log(`Detected inheritance: ${customVersion} inherits from ${versionNumber}`)
+							logger.info(`Detected inheritance: ${customVersion} inherits from ${versionNumber}`)
 						}
 					}
 				} catch (e) {
-					console.warn("Failed to check version inheritance:", e)
+					logger.info(`Failed to check version inheritance: ${e.message}`)
 					utils.writeLog(gamePath, `WARN | Instance: ${instanceId} | Failed to parse version JSON: ${e.message}`)
 				}
 			}
@@ -406,7 +456,7 @@ function registerHandlers(ipcMain, store, win) {
 		// if (_optswithoutaccesstoken.authorization.uuid) {
 		// 	_optswithoutaccesstoken.authorization.uuid = '***'
 		// }
-		console.log("Launching with options:", _optswithoutaccesstoken)
+		logger.info(`Launching with options: ${JSON.stringify(_optswithoutaccesstoken)}`)
 		_optswithoutaccesstoken = undefined
 		//end debug
 
@@ -458,11 +508,11 @@ function registerHandlers(ipcMain, store, win) {
 					hasHidden = true
 					if (exitAfterLaunch) {
 						utils.writeLog(gamePath, `EXIT | Instance: ${instanceId} | Fully exiting launcher`)
-						console.log('[EXIT] Fully exiting launcher - game started')
+						logger.info(`[EXIT] Fully exiting launcher - game started`)
 						app.quit()
 					} else {
 						win.hide()
-						console.log('[HIDE] Launcher hidden - game started')
+						logger.info(`[HIDE] Launcher hidden - game started`)
 					}
 				}
 			}
@@ -472,13 +522,13 @@ function registerHandlers(ipcMain, store, win) {
 				utils.writeLog(gamePath, `CLOSE | Instance: ${instanceId} | Exit Code: ${e}`)
 				if (hideLauncher && hasHidden && !exitAfterLaunch) {
 					win.show()
-					console.log('[SHOW] Launcher restored - game closed')
+					logger.info(`[SHOW] Launcher restored - game closed`)
 				}
 			})
 			
 			return { success: true }
 		} catch (error) {
-			console.error('[launch-game] Error:', error)
+			logger.error(`[launch-game] Error: ${error}`)
 			const gamePath = options.gamePath || store.get('gamePath')
 			utils.writeLog(gamePath, `ERROR | Instance: ${options.instanceId} | Launch failed: ${error.message}`)
 			return { success: false, error: error.message }

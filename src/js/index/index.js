@@ -10,25 +10,40 @@ import { currentSettings, ramAllocation, setCurrentSettings, setRamAllocation, g
 		getCurrentSettings, showSettings, closeSettings, browseGamePath, getSettingsFormData,
 		setHideLauncher, setExitAfterLaunch } from './settings.js'
 
+const logger = {
+	debug: (message) => {
+		const timestamp = new Date().toISOString()
+		console.log(`[index][DEBUG - ${timestamp}] ${message}`)
+  	},
+	info: (message) => {
+		const timestamp = new Date().toISOString()
+		console.log(`[index][INFO - ${timestamp}] ${message}`)
+	},
+	error: (message) => {
+		const timestamp = new Date().toISOString()
+		console.error(`[index][ERROR - ${timestamp}] ${message}`)
+	}
+}
+
 let versions = []
 let instances = {}
 let activeInstanceId = null
 let isMicrosoftLoginInProgress = false
 
 document.addEventListener('DOMContentLoaded', async () => {
-	console.log('[FRONTEND] DOMContentLoaded')
+	logger.info(`[FRONTEND] DOMContentLoaded`)
 	setupEventListeners()
 
-	console.log('[FRONTEND] Loading settings...')
+	logger.info(`[FRONTEND] Loading settings...`)
 	await loadSettings()
-	console.log('[FRONTEND] Settings loaded, profiles:', profiles.length)
+	logger.info(`[FRONTEND] Settings loaded, profiles: ${profiles.length}`)
 	
-	console.log('[FRONTEND] Loading versions...')
+	logger.info(`[FRONTEND] Loading versions...`)
 	await loadVersions()
-	console.log('[FRONTEND] Versions loaded:', versions.length)
+	logger.info(`[FRONTEND] Versions loaded: ${versions.length}`)
 	
 	setupIpcListeners()
-	console.log('[FRONTEND] Initialization complete')
+	logger.info(`[FRONTEND] Initialization complete`)
 })
 
 /*
@@ -175,38 +190,38 @@ function showConfirm(msg, callback) {
 	@returns {void}
 */
 function showAlert(msg, type = 'info') {
-	const container = document.getElementById('toastContainer')
-	const toast = document.createElement('div')
-	toast.className = 'pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg border transform transition-all duration-300 opacity-0 translate-x-full'
+	const container = document.getElementById('alertContainer')
+	const alert = document.createElement('div')
+	alert.className = 'pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg border transform transition-all duration-300 opacity-0 translate-x-full'
 	
 	if (type === 'error') {
-		toast.className += ' bg-red-900 border-red-700 text-red-100'
+		alert.className += ' bg-red-900 border-red-700 text-red-100'
 	} else if (type === 'success') {
-		toast.className += ' bg-green-900 border-green-700 text-green-100'
+		alert.className += ' bg-green-900 border-green-700 text-green-100'
 	} else {
-		toast.className += ' bg-neutral-800 border-neutral-600 text-neutral-100'
+		alert.className += ' bg-neutral-800 border-neutral-600 text-neutral-100'
 	}
 	
-	toast.innerHTML = `
+	alert.innerHTML = `
 		<span class="flex-1 text-sm">${msg}</span>
 		<button class="text-current hover:opacity-70 text-xl font-bold leading-none">&times;</button>
 	`
 	
-	container.appendChild(toast)
+	container.appendChild(alert)
 	
-	const closeBtn = toast.querySelector('button')
-	const removeToast = () => {
-		toast.classList.add('opacity-0', 'translate-x-full')
-		setTimeout(() => toast.remove(), 300)
+	const closeBtn = alert.querySelector('button')
+	const removealert = () => {
+		alert.classList.add('opacity-0', 'translate-x-full')
+		setTimeout(() => alert.remove(), 300)
 	}
 	
-	closeBtn.onclick = removeToast
+	closeBtn.onclick = removealert
 	
 	setTimeout(() => {
-		toast.classList.remove('opacity-0', 'translate-x-full')
+		alert.classList.remove('opacity-0', 'translate-x-full')
 	}, 10)
 	
-	setTimeout(removeToast, 5000)
+	setTimeout(removealert, 5000)
 }
 
 
@@ -403,13 +418,13 @@ async function saveAllSettings() {
 */
 function setupIpcListeners() {
 	window.api.onLog((data) => {
-		console.log('[IPC] Received log:', data)
+		logger.info(`[IPC] Received log: ${JSON.stringify(data)}`)
 		
 		const instanceId = data.instanceId
 		const msg = data.message
 		
 		if (!instances[instanceId]) {
-			console.warn('[IPC] Instance not found:', instanceId, 'Available:', Object.keys(instances))
+			logger.info(`[IPC] Instance not found: ${instanceId}, Available: ${JSON.stringify(Object.keys(instances))}`)
 			return
 		}
 		
@@ -426,7 +441,7 @@ function setupIpcListeners() {
 	})
 	
 	window.api.onTokenRefreshed((auth) => {
-		console.log('[TOKEN] Refreshed token for:', auth.name)
+		logger.info(`[TOKEN] Refreshed token for: ${auth.name}`)
 		setCurrentAuth(auth)
 		
 		const accounts = savedAccounts
@@ -442,12 +457,12 @@ function setupIpcListeners() {
 }
 
 async function loadSettings() {
-	console.log('[FRONTEND] Calling getSettings...')
+	logger.info(`[FRONTEND] Calling getSettings...`)
 	const settings = await window.api.getSettings()
-	console.log('[FRONTEND] Received settings:', settings)
+	logger.info(`[FRONTEND] Received settings: ${JSON.stringify(settings)}`)
 	setCurrentSettings(settings)
 	setProfiles((settings.profiles || []).filter(p => !['latest-release', 'latest-snapshot'].includes(p.version)))
-	console.log('[FRONTEND] Filtered profiles:', profiles)
+	logger.info(`[FRONTEND] Filtered profiles: ${profiles.length}`)
 	
 	setSavedAccounts(settings.accounts || [])
 	setCurrentAuth(settings.auth || null)
@@ -471,7 +486,7 @@ async function loadSettings() {
 	@returns {Promise<void>}
 */
 async function loadVersions() {
-	console.log('[FRONTEND] Calling getVersions...')
+	logger.info(`[FRONTEND] Calling getVersions...`)
 	const result = await window.api.getVersions()
 	if (!result.success) {
 		showAlert(`Failed to fetch versions: ${result.error}`, 'error')
@@ -479,7 +494,7 @@ async function loadVersions() {
 	} else {
 		versions = result.versions || []
 	}
-	console.log('[FRONTEND] Received versions:', versions.length)
+	logger.info(`[FRONTEND] Received versions: ${versions.length}`)
 	
 	const select = document.getElementById('pVersion')
 	select.innerHTML = ''
@@ -557,7 +572,7 @@ function createConsoleInstance(instanceId, profileName) {
 		profileName: profileName
 	}
 	
-	console.log('[INSTANCE] Created instance:', instanceId, 'Total instances:', Object.keys(instances).length)
+	logger.info(`[INSTANCE] Created instance: ${instanceId}, Total instances: ${Object.keys(instances).length}`)
 	
 	switchToInstance(instanceId)
 }

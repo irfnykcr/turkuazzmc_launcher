@@ -12,5 +12,9 @@ contextBridge.exposeInMainWorld('api', {
 	checkDiskSpace: () => ipcRenderer.invoke('check-disk-space'),
 	selectFolder: () => ipcRenderer.invoke('select-folder'),
 	onLog: (callback) => ipcRenderer.on('log', (event, data) => callback(data)),
-	onTokenRefreshed: (callback) => ipcRenderer.on('token-refreshed', (event, data) => callback(data))
+	onTokenRefreshed: (callback) => ipcRenderer.on('token-refreshed', (event, data) => callback(data)),
+
+	// updater: download-update, install-update
+	downloadUpdate: () => ipcRenderer.invoke('download-update'),
+	installUpdate: () => ipcRenderer.invoke('install-update'),
 })

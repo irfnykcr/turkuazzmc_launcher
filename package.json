@@ -1,6 +1,6 @@
 {
 	"name": "turkuazz_launcher",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"description": "",
 	"license": "MIT",
 	"author": "",
@@ -14,8 +14,63 @@
 		"electron": "^40.0.0"
 	},
 	"dependencies": {
+		"electron-builder": "^26.4.0",
 		"electron-store": "^6.0.1",
+		"electron-updater": "^6.7.3",
 		"minecraft-launcher-core": "^3.18.2",
 		"msmc": "^5.0.5"
+	},
+	"build": {
+		"appId": "com.turkuazz.launcher",
+		"productName": "TURKUAZZMC",
+		"artifactName": "${productName}-${version}.${ext}",
+		"asar": false,
+		"publish": {
+			"provider": "generic",
+			"url": "https://updates.turkuazz.vip/turkuazzmc/"
+		},
+		"linux": {
+			"target": [
+				"AppImage"
+			],
+			"category": "Utility",
+			"files": [
+				"main.js",
+				"preload.js",
+				"utils.js",
+				"updaterMain.js",
+				"ipcHandlers.js",
+				"package.json",
+				"views/**/*",
+				"src/**/*",
+				"assets/**/*",
+				"node_modules/**/*"
+			]
+		},
+		"win": {
+			"target": [
+				"nsis"
+			],
+			"icon": "winicon.png",
+			"files": [
+				"main.js",
+				"preload.js",
+				"utils.js",
+				"updaterMain.js",
+				"ipcHandlers.js",
+				"package.json",
+				"views/**/*",
+				"src/**/*",
+				"assets/**/*",
+				"node_modules/**/*"
+			]
+		},
+		"nsis": {
+			"createStartMenuShortcut": false,
+			"oneClick": false,
+			"runAfterFinish": false,
+			"createDesktopShortcut": true,
+			"allowToChangeInstallationDirectory": true
+		}
 	}
 }

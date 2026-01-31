@@ -5,6 +5,21 @@ const { promisify } = require('util')
 const { exec } = require('child_process')
 const execAsync = promisify(exec)
 
+const logger = {
+	debug: (message) => {
+		const timestamp = new Date().toISOString()
+		console.log(`[utils][DEBUG - ${timestamp}] ${message}`)
+	},
+	info: (message) => {
+		const timestamp = new Date().toISOString()
+		console.log(`[utils][INFO - ${timestamp}] ${message}`)
+	},
+	error: (message) => {
+		const timestamp = new Date().toISOString()
+		console.error(`[utils][ERROR - ${timestamp}] ${message}`)
+	}
+}
+
 /*
 	@param {string} gamePath
 	@param {string} message
@@ -16,7 +31,7 @@ function writeLog(gamePath, message) {
 		const logLine = `[${timestamp}] ${message}\n`
 		fs.appendFileSync(logPath, logLine, 'utf8')
 	} catch (e) {
-		console.error('Failed to write log:', e)
+		logger.error(`Failed to write log: ${e.message}`)
 	}
 }
 
@@ -33,7 +48,7 @@ async function findJavaExecutable() {
 			javaPaths.push(stdout.trim().split('\n')[0])
 		}
 	} catch (e) {
-		console.log('[JAVA] System Java not found in PATH')
+		logger.info(`[JAVA] System Java not found in PATH`)
 	}
 	
 	if (platform === 'win32') {
@@ -55,7 +70,7 @@ async function findJavaExecutable() {
 					}
 				}
 			} catch (e) {
-				console.log(`[JAVA] Failed to scan ${basePath}`)
+				logger.info(`[JAVA] Failed to scan ${basePath}`)
 			}
 		}
 	} else if (platform === 'linux') {
@@ -78,17 +93,17 @@ async function findJavaExecutable() {
 					}
 				}
 			} catch (e) {
-				console.log(`[JAVA] Failed to scan ${basePath}`)
+				logger.info(`[JAVA] Failed to scan ${basePath}`)
 			}
 		}
 	}
 	
 	if (javaPaths.length > 0) {
-		console.log('[JAVA] Found Java installations:', javaPaths)
+		logger.info(`[JAVA] Found Java installations: ${javaPaths.join(', ')}`)
 		return javaPaths[0]
 	}
 	
-	console.log('[JAVA] No Java found, defaulting to "java"')
+	logger.info(`[JAVA] No Java found, defaulting to "java"`)
 	return 'java'
 }
 
@@ -112,7 +127,7 @@ function checkDiskSpace(gamePath) {
 			hasSpace: availableBytes >= requiredBytes
 		}
 	} catch (e) {
-		console.error('[DISK] Failed to check disk space:', e)
+		logger.error(`[DISK] Failed to check disk space: ${e.message}`)
 		return { available: Infinity, required: 2 * 1024 * 1024 * 1024, hasSpace: true }
 	}
 }

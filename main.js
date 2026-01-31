@@ -4,6 +4,23 @@ const Store = require('electron-store')
 const os = require('os')
 const { registerHandlers } = require('./ipcHandlers')
 
+// basic logger: [status, timestamp]
+const logger = {
+	debug: (message) => {
+		const timestamp = new Date().toISOString()
+		console.log(`[main][DEBUG - ${timestamp}] ${message}`)
+  	},
+	info: (message) => {
+		const timestamp = new Date().toISOString()
+		console.log(`[main][INFO - ${timestamp}] ${message}`)
+	},
+	error: (message) => {
+		const timestamp = new Date().toISOString()
+		console.error(`[main][ERROR - ${timestamp}] ${message}`)
+	}
+}
+
+
 const store = new Store({
   defaults: {
 	gamePath: process.platform === 'win32' 
@@ -27,31 +44,33 @@ const store = new Store({
 let win
 
 const createWindow = () => {
-  console.log('[STARTUP] Creating window...')
-  win = new BrowserWindow({
-	width: 1280,
-	height: 720,
-	webPreferences: {
-	  preload: path.join(__dirname, 'preload.js'),
-	  nodeIntegration: false,
-	  contextIsolation: true
-	}
-  })
+	logger.info(`[STARTUP] Creating window...`)
+	win = new BrowserWindow({
+		width: 1280,
+		height: 720,
+		webPreferences: {
+			preload: path.join(__dirname, 'preload.js'),
+			nodeIntegration: false,
+			contextIsolation: true
+		}
+		})
 
-  win.setMenuBarVisibility(false)
-  win.webContents.openDevTools()
-  win.loadFile('views/index.html')
-  console.log('[STARTUP] Window created')
+	win.setMenuBarVisibility(false)
+	if (!app.isPackaged) {
+		win.webContents.openDevTools()
+	}
+	win.loadFile('views/index.html')
+	logger.info(`[STARTUP] Window created`)
 }
 
 app.on('ready', () => {
-	console.log('[STARTUP] App ready')
+	logger.info(`[STARTUP] App ready`)
 	createWindow()
 	registerHandlers(ipcMain, store, win)
-	console.log('[STARTUP] IPC handlers registered')
+	logger.info(`[STARTUP] IPC handlers registered`)
 })
 
 app.on('window-all-closed', () => {
-	console.log('bye')
+	logger.info(`bye`)
 	app.quit()	
 })
