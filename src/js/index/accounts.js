@@ -120,20 +120,38 @@ export function renderAccountList() {
 			el.className = `flex items-center justify-between p-3 rounded border-l-4 mb-2 cursor-pointer transition ${activeClass}`
 			el.onclick = () => window.switchAccountHandler(acc)
 
-			const avatarUrl = `https://mc-heads.net/avatar/${acc.name}`
+			const safeName = acc.name.replace(/[^a-zA-Z0-9_-]/g, '')
+			const imgId = `avatar-${acc.type}-${safeName}`
+			const placeholder = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
 			
+			const msControl = acc.type === 'ms' ? `
+				<button class="text-neutral-500 hover:text-green-500 p-2 refresh-btn transition" title="Refresh">
+					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+				</button>
+			` : ''
+
 			el.innerHTML = `
 				<div class="flex items-center gap-3">
-					<img src="${avatarUrl}" class="w-8 h-8 rounded bg-neutral-600">
+					<img id="${imgId}" src="${placeholder}" class="w-8 h-8 rounded bg-neutral-600">
 					<div class="flex flex-col">
 						<span class="font-bold text-white text-sm leading-tight">${acc.name}</span>
 						<span class="text-[10px] text-neutral-400 leading-tight">${acc.type === 'ms' ? 'Microsoft' : 'Offline'}</span>
 					</div>
 				</div>
-				<button class="text-neutral-500 hover:text-red-500 p-2 del-btn transition" title="Delete">
-					<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-				</button>
+				<div class="flex items-center">
+					${msControl}
+					<button class="text-neutral-500 hover:text-red-500 p-2 del-btn transition" title="Delete">
+						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+					</button>
+				</div>
 			`
+			
+			if (acc.type === 'ms') {
+				el.querySelector('.refresh-btn').onclick = (e) => {
+					e.stopPropagation()
+					window.refreshAccountHandler(acc)
+				}
+			}
 			
 			el.querySelector('.del-btn').onclick = (e) => {
 				e.stopPropagation()
@@ -141,6 +159,13 @@ export function renderAccountList() {
 			}
 
 			container.appendChild(el)
+			
+			window.api.getAccountAvatar(acc.name).then(res => {
+				if (res.success && res.data) {
+					const img = document.getElementById(imgId)
+					if (img) img.src = res.data
+				}
+			})
 		})
 	}
 

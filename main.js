@@ -27,7 +27,7 @@ const store = new Store({
 	  ? path.join(process.env.APPDATA, '.minecraft') 
 	  : path.join(os.homedir(), '.minecraft'),
 	javaPath: 'java',
-	ramAllocation: 2048,
+	javaArgs: '-Xmx4096M -Xms4096M',
 	hideLauncher: false,
 	exitAfterLaunch: false,
 	auth: {
@@ -63,8 +63,44 @@ const createWindow = () => {
 	logger.info(`[STARTUP] Window created`)
 }
 
-app.on('ready', () => {
+app.on('ready', async () => {
 	logger.info(`[STARTUP] App ready`)
+
+	try {
+		const gamePath = store.get('gamePath') || (process.platform === 'win32' 
+	  		? path.join(process.env.APPDATA, '.minecraft') 
+	  		: path.join(os.homedir(), '.minecraft'))
+
+		const logFile = path.join(gamePath, 'turkuazz_logs.txt')
+		const rotatedLog = path.join(gamePath, 'turkuazz_logs.log.1')
+		
+		try {
+			await require('fs').promises.access(logFile)
+			
+			const stats = await require('fs').promises.stat(logFile)
+			if (stats.size > 10 * 1024 * 1024) {
+				logger.info(`[STARTUP] Log file is too big (${(stats.size / 1024 / 1024).toFixed(2)}MB), deleting it`)
+				await require('fs').promises.unlink(logFile)
+			} else {
+				try {
+					await require('fs').promises.access(rotatedLog)
+					await require('fs').promises.unlink(rotatedLog)
+				} catch (e) {
+					// rotated log probably doesn't exist
+				}
+				
+				await require('fs').promises.rename(logFile, rotatedLog)
+				logger.info(`[STARTUP] Rotated old log to ${rotatedLog}`)
+			}
+		} catch (e) {
+			if (e.code !== 'ENOENT') {
+				logger.error(`[STARTUP] Failed to rotate log: ${e.message}`)
+			}
+		}
+	} catch (e) {
+		logger.error(`[STARTUP] Log initialization error: ${e.message}`)
+	}
+
 	createWindow()
 	registerHandlers(ipcMain, store, win)
 	logger.info(`[STARTUP] IPC handlers registered`)
