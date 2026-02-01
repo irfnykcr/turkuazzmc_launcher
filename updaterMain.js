@@ -112,6 +112,11 @@ class UpdateManager {
 			}
 
 			const result = await autoUpdater.checkForUpdates()
+			
+			if (this.updateAvailable && this.updateInfo) {
+				return true
+			}
+			
 			return this.updateAvailable
 		} catch (error) {
 			this.logger.error(`Failed to check for updates: ${error.message}`)
@@ -130,6 +135,10 @@ class UpdateManager {
 
 	async downloadUpdate() {
 		try {
+			if (!this.updateAvailable || !this.updateInfo) {
+				await this.checkForUpdates()
+			}
+			
 			this.logger.info(`Starting download update...`)
 			if (this.mainWindow && this.mainWindow.webContents) {
 				this.mainWindow.webContents.send('update-progress', {
@@ -137,8 +146,6 @@ class UpdateManager {
 					text: 'Starting download...'
 				})
 			}
-			
-			this.startProgressSimulation()
 			
 			await autoUpdater.downloadUpdate()
 			
@@ -153,25 +160,6 @@ class UpdateManager {
 			}
 			return false
 		}
-	}
-	
-	startProgressSimulation() {
-		let progress = 0
-		this.progressInterval = setInterval(() => {
-			if (!this.downloadInProgress) {
-				this.downloadInProgress = true
-			}
-			
-			progress += Math.random() * 5 + 2
-			if (progress > 95) progress = 95
-			
-			if (this.mainWindow && this.mainWindow.webContents) {
-				this.mainWindow.webContents.send('update-progress', {
-					percent: Math.floor(progress),
-					text: `Downloading... ${Math.floor(progress)}%`
-				})
-			}
-		}, 500)
 	}
 	
 	stopProgressSimulation() {
