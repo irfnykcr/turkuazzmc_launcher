@@ -5,6 +5,7 @@ const { launch, createMinecraftProcessWatcher } = require('@xmcl/core')
 const msmc = require('msmc')
 const utils = require('./utils')
 const UpdateManager = require('./updaterMain.js')
+const { autoUpdater } = require('electron-updater')
 
 const logger = {
 	debug: (message) => {
@@ -21,7 +22,6 @@ const logger = {
 	}
 }
 
-let updateManager = null
 const activeGameProcesses = new Map()
 
 /*
@@ -31,18 +31,39 @@ const activeGameProcesses = new Map()
 */
 function registerHandlers(ipcMain, store, win) {
 	
-	updateManager = new UpdateManager(win)
+	const updateManager = new UpdateManager(win)
 	updateManager.setServerEndpoint(store.get('updateServerEndpoint', 'updates.turkuazz.vip'))
 	
 	updateManager.checkForUpdates().then((hasUpdate) => {
-		if (!hasUpdate) {return}
-		if (!app.isPackaged) {
-			logger.info(`Update available, but in development mode - skipping update page`)
-			return
+		try {
+			if (!hasUpdate) {
+				logger.info(`No update available`)
+				return
+			}
+			
+			const updateInfo = updateManager.getUpdateInfo()
+			if (!updateInfo || !updateInfo.version) {
+				logger.error(`Update available but info is missing/invalid, skipping`)
+				return
+			}
+
+			if (autoUpdater.currentVersion.compare(updateInfo.version) >= 0) {
+				logger.info(`Current version is same or newer than update, skipping`)
+				return
+			}
+
+			if (!app.isPackaged) {
+				logger.info(`Update available, but in development mode - skipping update page`)
+				return
+			}
+			logger.info(`Update available, showing update page...`)
+			win.loadFile(path.join(__dirname, 'views/updater.html'))
+		} catch (err) {
+			logger.error(`Error in update handling: ${err.message}`)
 		}
-		logger.info(`Update available, showing update page...`)
-		win.loadFile(path.join(__dirname, 'views/updater.html'))
 		return
+	}).catch((err) => {
+		logger.error(`Failed to check for updates: ${err.message}`)
 	})
 
 	
@@ -247,7 +268,19 @@ function registerHandlers(ipcMain, store, win) {
 					settings.profiles = imported
 				} catch (err) {
 					if (err.code === 'ENOENT') {
-						logger.info(`[get-settings] File does not exist`)
+						logger.info(`[get-settings] File does not exist, creating it...`)
+						try {
+							await fs.promises.mkdir(gamePath, { recursive: true })
+							await fs.promises.writeFile(profilesPath, JSON.stringify({
+								profiles: {},
+								settings: { crashAssistance: true, enableAdvanced: false },
+								launcherVersion: { name: "1.0.0", format: 21 },
+								authenticationDatabase: {}
+							}, null, 2))
+							logger.info(`[get-settings] Created new launcher_profiles.json`)
+						} catch (createErr) {
+							logger.error(`[get-settings] Failed to create launcher_profiles.json: ${createErr}`)
+						}
 					} else {
 						throw err
 					}
@@ -287,6 +320,7 @@ function registerHandlers(ipcMain, store, win) {
 		if (newSettings.profiles && newSettings.profiles.length >= 0) {
 			try {
 				const gamePath = newSettings.gamePath || store.get('gamePath')
+				await fs.promises.mkdir(gamePath, { recursive: true })
 				const profilesPath = path.join(gamePath, 'launcher_profiles.json')
 				
 				let launcherData = { profiles: {} }

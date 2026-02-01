@@ -18,21 +18,21 @@ window.api.downloadUpdate().then((success) => {
 		progressBar.style.width = '100%'
 		progressPercentage.textContent = '100%'
 		restartButton.disabled = false
-		restartButton.classList.add('animate-pulse')
+		// restartButton.classList.add('animate-pulse')
 	} else {
 		updateStatus.textContent = 'Failed to download update'
-		progressBar.classList.remove('bg-blue-600')
+		progressBar.classList.remove('bg-green-600')
 		progressBar.classList.add('bg-red-600')
 	}
 }).catch((error) => {
 	updateStatus.textContent = `Error: ${error.message || error}`
-	progressBar.classList.remove('bg-blue-600')
+	progressBar.classList.remove('bg-green-600')
 	progressBar.classList.add('bg-red-600')
 })
 
 restartButton.addEventListener('click', () => {
 	if (downloadComplete) {
-		updateStatus.textContent = 'Installing update and restarting...'
+		updateStatus.textContent = 'Installing update...'
 		restartButton.disabled = true
 		window.api.installUpdate()
 	}
@@ -47,7 +47,7 @@ window.api.onUpdateDownloaded(() => {
 	downloadComplete = true
 	updateStatus.textContent = 'Update downloaded successfully!'
 	restartButton.disabled = false
-	restartButton.classList.add('animate-pulse')
+	// restartButton.classList.add('animate-pulse')
 })
 
 window.api.onUpdateError((errorMsg) => {
