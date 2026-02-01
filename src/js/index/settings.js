@@ -1,5 +1,5 @@
 export let currentSettings = {}
-export let ramAllocation = 2048
+export let javaArgs = '-Xmx4096M -Xms4096M'
 export let hideLauncher = false
 export let exitAfterLaunch = false
 
@@ -12,18 +12,18 @@ export function setCurrentSettings(settings) {
 }
 
 /*
-	@param {number} ram
+	@param {string} args
 	@returns {void}
 */
-export function setRamAllocation(ram) {
-	ramAllocation = ram
+export function setJavaArgs(args) {
+	javaArgs = args
 }
 
 /*
-	@returns {number}
+	@returns {string}
 */
-export function getRamAllocation() {
-	return ramAllocation
+export function getJavaArgs() {
+	return javaArgs
 }
 
 /*
@@ -69,14 +69,14 @@ export function getCurrentSettings() {
 export function showSettings() {
 	document.getElementById('gamePathInput').value = currentSettings.gamePath || ''
 	document.getElementById('javaPathInput').value = currentSettings.javaPath || 'java'
-	document.getElementById('ramSlider').value = ramAllocation
-	document.getElementById('ramInput').value = ramAllocation
+	const ramSlider = document.getElementById('ramSlider')
+	const ramInput = document.getElementById('ramInput')
+	const ramMB = currentSettings.ramMB || 4096
+	ramSlider.value = ramMB
+	ramInput.value = ramMB
 	document.getElementById('hideLauncherCheckbox').checked = hideLauncher
 	document.getElementById('exitAfterLaunchCheckbox').checked = exitAfterLaunch
 	document.getElementById('exitAfterLaunchCheckbox').disabled = !hideLauncher
-	// update API URL
-	const apiInput = document.getElementById('updateApiInput')
-	if (apiInput) apiInput.value = currentSettings.updateApiUrl || ''
 	document.getElementById('settingsModal').classList.remove('hidden')
 }
 
@@ -104,9 +104,8 @@ export function getSettingsFormData() {
 	return {
 		gamePath: document.getElementById('gamePathInput').value,
 		javaPath: document.getElementById('javaPathInput').value,
-		ramAllocation: parseInt(document.getElementById('ramInput').value),
+		ramMB: parseInt(document.getElementById('ramSlider').value),
 		hideLauncher: document.getElementById('hideLauncherCheckbox').checked,
-		exitAfterLaunch: document.getElementById('exitAfterLaunchCheckbox').checked,
-		updateApiUrl: (document.getElementById('updateApiInput') && document.getElementById('updateApiInput').value) || ''
+		exitAfterLaunch: document.getElementById('exitAfterLaunchCheckbox').checked
 	}
 }

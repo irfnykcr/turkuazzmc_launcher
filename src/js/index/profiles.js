@@ -1,3 +1,5 @@
+import { getCurrentSettings } from './settings.js'
+
 export let profiles = []
 export let selectedProfileIndex = -1
 
@@ -54,12 +56,23 @@ export function selectProfile(index) {
 	document.getElementById('currentProfileVersion').textContent = `Version: ${p.version}`
 	document.getElementById('currentProfileMode').textContent = `Ready`
 	renderProfileList()
+	updatePreview()
 }
 
 /*
 	@returns {void}
 */
 export function showCreateProfile() {
+	const globalRam = getCurrentSettings().ramMB || 4096
+	const globalJavaPath = getCurrentSettings().javaPath || 'java'
+	document.getElementById('pRamSlider').min = 0
+	document.getElementById('pRamSlider').value = globalRam
+	document.getElementById('pRamInput').min = 0
+	document.getElementById('pRamInput').value = globalRam
+	document.getElementById('pRamHelp').textContent = `Starts from global setting (${globalRam} MB), adjust as needed`
+	document.getElementById('pJavaPathInput').value = globalJavaPath
+	document.getElementById('profileSettingsSection').classList.remove('hidden')
+	document.getElementById('profileSettingsArrow').classList.add('rotate-180')
 	document.getElementById('profileModal').classList.remove('hidden')
 	document.getElementById('pName').value = `My Profile ${profiles.length + 1}`
 }
@@ -102,5 +115,99 @@ export function deleteProfile(index) {
 		document.getElementById('currentProfileName').textContent = 'No Profile Selected'
 		document.getElementById('currentProfileVersion').textContent = 'Version: -'
 		document.getElementById('currentProfileMode').textContent = 'Mode: -'
+	}
+}
+
+/*
+	@returns {void}
+*/
+export async function handleEditProfile() {
+	if (selectedProfileIndex === -1) return
+	
+	const p = profiles[selectedProfileIndex]
+	document.getElementById('profileModalTitle').textContent = 'Edit Profile'
+	document.getElementById('editingProfileIndex').value = selectedProfileIndex
+	document.getElementById('pName').value = p.name
+	
+	const versionSelect = document.getElementById('pVersion')
+	const existingOption = Array.from(versionSelect.options).find(opt => opt.value === p.version)
+	if (!existingOption) {
+		const customOpt = document.createElement('option')
+		customOpt.value = p.version
+		customOpt.textContent = `${p.version} (Custom/Modded)`
+		versionSelect.insertBefore(customOpt, versionSelect.firstChild)
+	}
+	versionSelect.value = p.version
+	
+	const ramSlider = document.getElementById('pRamSlider')
+	const ramInput = document.getElementById('pRamInput')
+	const globalRam = getCurrentSettings().ramMB || 4096
+	const globalJavaPath = getCurrentSettings().javaPath || 'java'
+	const ramMB = p.settings?.ramMB || globalRam
+	
+	ramSlider.min = 0
+	ramSlider.value = ramMB
+	ramInput.min = 0
+	ramInput.value = ramMB
+	
+	const javaPathInput = document.getElementById('pJavaPathInput')
+	javaPathInput.value = p.settings?.javaPath || globalJavaPath
+
+	document.getElementById('profileSettingsSection').classList.remove('hidden')
+	document.getElementById('profileSettingsArrow').classList.add('rotate-180')
+	
+	document.getElementById('pRamHelp').textContent = `Starts from global setting (${globalRam} MB), adjust as needed`
+	
+	document.getElementById('profileModal').classList.remove('hidden')
+}
+
+/*
+	@returns {void}
+*/
+export async function updatePreview() {
+	if (selectedProfileIndex === -1) {
+		document.getElementById('noProfileSelected').classList.remove('hidden')
+		document.getElementById('profilePreviewDetails').classList.add('hidden')
+		return
+	}
+
+	const p = profiles[selectedProfileIndex]
+	document.getElementById('noProfileSelected').classList.add('hidden')
+	document.getElementById('profilePreviewDetails').classList.remove('hidden')
+
+	document.getElementById('previewVersion').textContent = p.version
+	document.getElementById('previewRam').textContent = p.settings?.ramMB ? `${p.settings.ramMB} MB` : 'Global Setting'
+	
+	const settings = await window.api.getSettings()
+	document.getElementById('varGamePath').textContent = settings.gamePath || '-'
+	document.getElementById('varJavaPath').textContent = settings.javaPath || 'java'
+	document.getElementById('varRam').textContent = p.settings?.ramMB ? `${p.settings.ramMB} MB` : '4096 MB (Global)'
+	
+	const modsListElement = document.getElementById('modsList')
+	const modsContainer = modsListElement.parentElement
+	
+	if (p.isCustom) {
+		modsContainer.classList.remove('hidden')
+		const profileData = await window.api.getProfileData(p.version, settings.gamePath)
+		if (profileData.success) {
+			const { mods } = profileData.data
+			
+			document.getElementById('modCount').textContent = mods.length
+			if (mods.length > 0) {
+				modsListElement.className = "grid grid-cols-1 md:grid-cols-2 gap-2"
+				modsListElement.innerHTML = mods.slice(0, 15).map(m => {
+					const modName = m.name.replace('.jar', '').replace(/_/g, ' ').replace(/-/g, ' ')
+					return `<div class="text-sm py-2 px-3 bg-neutral-800 rounded hover:bg-neutral-700 transition truncate" title="${modName}">${modName}</div>`
+				}).join('')
+				if (mods.length > 15) {
+					modsListElement.innerHTML += `<div class="text-sm text-neutral-500 italic mt-2 text-center col-span-1 md:col-span-2">+${mods.length - 15} more mods...</div>`
+				}
+			} else {
+				modsListElement.className = ""
+				modsListElement.innerHTML = '<div class="text-sm text-neutral-500 italic">No mods installed</div>'
+			}
+		}
+	} else {
+		modsContainer.classList.add('hidden')
 	}
 }
