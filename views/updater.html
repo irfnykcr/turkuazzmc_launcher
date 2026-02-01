@@ -6,6 +6,7 @@
 	<title>Turkuazz Launcher Updater</title>
 	<script src="../assets/tailwindcss.js"></script>
 	<link rel="stylesheet" href="../src/css/style.css">
+	<script src="../src/js/updater/updater.js" defer></script>
 </head>
 
 <body>
@@ -13,10 +14,10 @@
 		<h1 class="text-3xl font-bold mb-6">Updater</h1>
 		<p id="updateStatus" class="mb-4">Checking for updates...</p>
 		<div id="progressBarContainer" class="w-full max-w-md bg-neutral-700 rounded-full h-6 overflow-hidden mb-4">
-			<div id="progressBar" class="bg-blue-600 h-full w-0 transition-all duration-500"></div>
+			<div id="progressBar" class="bg-green-600 h-full w-0 transition-all duration-500"></div>
 		</div>
 		<p id="progressPercentage" class="mb-6">0%</p>
-		<button id="restartButton" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50" disabled>Restart and Install</button>
+		<button id="restartButton" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50" disabled>Close</button>
 	</div>
 	<script type="module" src="../src/js/updater/updater.js"></script>
 </body>
