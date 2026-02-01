@@ -1,12 +1,12 @@
 
 
 import { profiles, selectedProfileIndex, setProfiles, renderProfileList, selectProfile, showCreateProfile,
-		addProfile, deleteProfile } from './profiles.js'
+		addProfile, deleteProfile, handleEditProfile, updatePreview } from './profiles.js'
 
 import { currentAuth, savedAccounts, setSavedAccounts, setCurrentAuth, getCurrentAuth, getMCLCAuth, updateAccountUI,
-		renderAccountList, addAccountToState, removeAccountFromState } from './accounts.js'
+		renderAccountList, addAccountToState, removeAccountFromState, isCurrentAccount } from './accounts.js'
 
-import { currentSettings, ramAllocation, setCurrentSettings, setRamAllocation, getRamAllocation,
+import { currentSettings, javaArgs, setCurrentSettings, setJavaArgs, getJavaArgs,
 		getCurrentSettings, showSettings, closeSettings, browseGamePath, getSettingsFormData,
 		setHideLauncher, setExitAfterLaunch } from './settings.js'
 
@@ -43,8 +43,35 @@ document.addEventListener('DOMContentLoaded', async () => {
 	logger.info(`[FRONTEND] Versions loaded: ${versions.length}`)
 	
 	setupIpcListeners()
+	
+	updateOnlineStatus()
+	window.addEventListener('online', () => {
+		updateOnlineStatus()
+		loadVersions()
+	})
+	window.addEventListener('offline', () => {
+		updateOnlineStatus()
+		loadVersions()
+	})
+
 	logger.info(`[FRONTEND] Initialization complete`)
 })
+
+function updateOnlineStatus() {
+	const isOnline = navigator.onLine
+	const statusMsg = document.getElementById('statusMessage')
+	
+	if (!isOnline) {
+		showAlert('You are currently offline. Some features may be unavailable.', 'error')
+		if (statusMsg) statusMsg.textContent = 'Offline Mode'
+		document.body.classList.add('offline-mode')
+	} else {
+		if (statusMsg && statusMsg.textContent === 'Offline Mode') {
+			statusMsg.textContent = 'Ready to launch'
+		}
+		document.body.classList.remove('offline-mode')
+	}
+}
 
 /*
 	@returns {void}
@@ -100,15 +127,6 @@ function setupEventListeners() {
 	document.getElementById('settingsModalOverlay').addEventListener('click', closeSettings)
 	document.getElementById('saveSettingsBtn').addEventListener('click', handleSaveSettings)
 	document.getElementById('browseGamePathBtn').addEventListener('click', browseGamePath)
-	document.getElementById('ramSlider').addEventListener('input', (e) => {
-		document.getElementById('ramInput').value = e.target.value
-	})
-	document.getElementById('ramInput').addEventListener('input', (e) => {
-		let val = parseInt(e.target.value) || 512
-		val = Math.max(512, Math.min(16384, val))
-		document.getElementById('ramSlider').value = val
-		e.target.value = val
-	})
 
 	document.getElementById('hideLauncherCheckbox').addEventListener('change', (e) => {
 		const exitCheckbox = document.getElementById('exitAfterLaunchCheckbox')
@@ -116,6 +134,47 @@ function setupEventListeners() {
 		if (!e.target.checked) {
 			exitCheckbox.checked = false
 		}
+	})
+
+	document.getElementById('toggleProfileSettings').addEventListener('click', () => {
+		const section = document.getElementById('profileSettingsSection')
+		const arrow = document.getElementById('profileSettingsArrow')
+		section.classList.toggle('hidden')
+		arrow.classList.toggle('rotate-180')
+	})
+	
+	document.getElementById('pRamSlider').addEventListener('input', (e) => {
+		const value = parseInt(e.target.value)
+		document.getElementById('pRamInput').value = value
+	})
+	
+	document.getElementById('ramSlider').addEventListener('input', (e) => {
+		const value = parseInt(e.target.value)
+		document.getElementById('ramInput').value = value
+	})
+
+	document.getElementById('ramInput').addEventListener('input', (e) => {
+		const value = parseInt(e.target.value)
+		if (value >= 2048 && value <= 16384) {
+			document.getElementById('ramSlider').value = value
+		}
+	})
+
+	document.getElementById('pRamInput').addEventListener('input', (e) => {
+		const value = parseInt(e.target.value)
+		if (value >= 0 && value <= 16384) {
+			document.getElementById('pRamSlider').value = value
+		}
+	})
+
+	document.getElementById('previewTab').addEventListener('click', () => switchTab('preview'))
+	document.getElementById('consoleTab').addEventListener('click', () => switchTab('console'))
+	document.getElementById('editProfileBtn').addEventListener('click', handleEditProfile)
+	document.getElementById('toggleLaunchVars').addEventListener('click', () => {
+		const content = document.getElementById('launchVarsContent')
+		const arrow = document.getElementById('launchVarsArrow')
+		content.classList.toggle('hidden')
+		arrow.classList.toggle('rotate-180')
 	})
 
 	setupConfirmModal()
@@ -146,6 +205,33 @@ function setupEscapeKeyHandler() {
 			}
 		}
 	})
+}
+
+/*
+	@param {string} tab - 'preview' or 'console'
+	@returns {void}
+*/
+function switchTab(tab) {
+	const previewTab = document.getElementById('previewTab')
+	const consoleTab = document.getElementById('consoleTab')
+	const previewContent = document.getElementById('previewContent')
+	const consoleContent = document.getElementById('consoleContent')
+
+	if (tab === 'preview') {
+		previewTab.classList.add('border-green-500', 'text-green-500')
+		previewTab.classList.remove('border-transparent', 'text-neutral-400')
+		consoleTab.classList.remove('border-green-500', 'text-green-500')
+		consoleTab.classList.add('border-transparent', 'text-neutral-400')
+		previewContent.classList.remove('hidden')
+		consoleContent.classList.add('hidden')
+	} else {
+		consoleTab.classList.add('border-green-500', 'text-green-500')
+		consoleTab.classList.remove('border-transparent', 'text-neutral-400')
+		previewTab.classList.remove('border-green-500', 'text-green-500')
+		previewTab.classList.add('border-transparent', 'text-neutral-400')
+		consoleContent.classList.remove('hidden')
+		previewContent.classList.add('hidden')
+	}
 }
 
 let confirmCallback = null
@@ -246,11 +332,41 @@ async function handleSaveProfile(e) {
 	const name = document.getElementById('pName').value
 	const version = document.getElementById('pVersion').value
 	
+	const ramMB = parseInt(document.getElementById('pRamSlider').value)
+	const javaPath = document.getElementById('pJavaPathInput').value.trim()
+	const globalRam = currentSettings.ramMB || 4096
+	const globalJavaPath = (currentSettings.javaPath || 'java').trim()
+	
+	const editingIndex = parseInt(document.getElementById('editingProfileIndex').value)
 	const newProfile = { name, version }
-	addProfile(newProfile)
+	
+	const hasJavaOverride = javaPath && javaPath !== globalJavaPath
+	if (ramMB !== globalRam || hasJavaOverride) {
+		newProfile.settings = {}
+		if (ramMB !== globalRam) newProfile.settings.ramMB = ramMB
+		if (hasJavaOverride) newProfile.settings.javaPath = javaPath
+	}
+	
+	if (editingIndex >= 0) {
+		profiles[editingIndex] = newProfile
+		renderProfileList()
+		selectProfile(editingIndex)
+	} else {
+		addProfile(newProfile)
+	}
 	
 	await saveAllSettings()
 	document.getElementById('profileModal').classList.add('hidden')
+	
+	document.getElementById('pRamSlider').value = globalRam
+	document.getElementById('pRamSlider').min = 0
+	document.getElementById('pRamInput').value = globalRam
+	document.getElementById('pRamInput').min = 0
+	document.getElementById('pJavaPathInput').value = globalJavaPath
+	document.getElementById('editingProfileIndex').value = '-1'
+	document.getElementById('profileModalTitle').textContent = 'Create Profile'
+	document.getElementById('profileSettingsSection').classList.add('hidden')
+	document.getElementById('profileSettingsArrow').classList.remove('rotate-180')
 }
 
 // Account handlers
@@ -259,6 +375,29 @@ window.switchAccountHandler = async (acc) => {
 	await saveAllSettings()
 	updateAccountUI()
 	renderAccountList()
+}
+
+window.refreshAccountHandler = async (acc) => {
+	showAlert(`Refreshing session for ${acc.name}...`, 'info')
+	try {
+		const result = await window.api.refreshMicrosoftToken(acc)
+		if (result.success) {
+			showAlert(`Session refreshed for ${acc.name}`, 'success')
+			addAccountToState(result.auth)
+			
+			if (isCurrentAccount(acc)) {
+				setCurrentAuth(result.auth)
+				updateAccountUI()
+			}
+			
+			await saveAllSettings()
+			renderAccountList()
+		} else {
+			showAlert(`Failed to refresh: ${result.error}. Please remove and add account again.`, 'error')
+		}
+	} catch (e) {
+		showAlert(`Error: ${e.message}`, 'error')
+	}
 }
 
 window.removeAccountHandler = async (acc) => {
@@ -363,7 +502,7 @@ async function handleSaveSettings() {
 	const formData = getSettingsFormData()
 	const gamePath = formData.gamePath
 	const javaPath = formData.javaPath
-	const newRamAllocation = formData.ramAllocation
+	const ramMB = formData.ramMB
 	const newHideLauncher = formData.hideLauncher
 	const newExitAfterLaunch = formData.exitAfterLaunch
 	
@@ -372,12 +511,11 @@ async function handleSaveSettings() {
 	const updatedSettings = getCurrentSettings()
 	updatedSettings.gamePath = gamePath
 	updatedSettings.javaPath = javaPath
-	updatedSettings.ramAllocation = newRamAllocation
+	updatedSettings.ramMB = ramMB
 	updatedSettings.hideLauncher = newHideLauncher
 	updatedSettings.exitAfterLaunch = newExitAfterLaunch
 	
 	setCurrentSettings(updatedSettings)
-	setRamAllocation(newRamAllocation)
 	setHideLauncher(newHideLauncher)
 	setExitAfterLaunch(newExitAfterLaunch)
 	
@@ -385,7 +523,7 @@ async function handleSaveSettings() {
 		const settingsToSave = {
 			gamePath: updatedSettings.gamePath,
 			javaPath: updatedSettings.javaPath,
-			ramAllocation: updatedSettings.ramAllocation,
+			ramMB: updatedSettings.ramMB,
 			hideLauncher: updatedSettings.hideLauncher,
 			exitAfterLaunch: updatedSettings.exitAfterLaunch,
 			auth: updatedSettings.auth,
@@ -406,10 +544,16 @@ async function handleSaveSettings() {
 	@returns {Promise<void>}
 */
 async function saveAllSettings() {
-	const settings = await window.api.getSettings()
-	settings.profiles = profiles
-	settings.auth = getCurrentAuth()
-	settings.accounts = savedAccounts
+	const settings = {
+		gamePath: getCurrentSettings().gamePath,
+		javaPath: getCurrentSettings().javaPath,
+		ramMB: getCurrentSettings().ramMB || 4096,
+		hideLauncher: getCurrentSettings().hideLauncher,
+		exitAfterLaunch: getCurrentSettings().exitAfterLaunch,
+		profiles: profiles,
+		auth: getCurrentAuth(),
+		accounts: savedAccounts
+	}
 	await window.api.saveSettings(settings)
 }
 
@@ -430,6 +574,7 @@ function setupIpcListeners() {
 		
 		const container = instances[instanceId].logContainer
 		const line = document.createElement('div')
+		line.className = 'select-text'
 		line.textContent = msg
 		container.appendChild(line)
 		container.scrollTop = container.scrollHeight
@@ -459,14 +604,17 @@ function setupIpcListeners() {
 async function loadSettings() {
 	logger.info(`[FRONTEND] Calling getSettings...`)
 	const settings = await window.api.getSettings()
-	logger.info(`[FRONTEND] Received settings: ${JSON.stringify(settings)}`)
+	logger.info(`[FRONTEND] Received settings:`)
+	logger.info(`[FRONTEND] - gamePath: ${settings.gamePath}`)
+	logger.info(`[FRONTEND] - profiles count: ${settings.profiles?.length || 0}`)
+	logger.info(`[FRONTEND] - profiles: ${JSON.stringify(settings.profiles)}`)
+	
 	setCurrentSettings(settings)
-	setProfiles((settings.profiles || []).filter(p => !['latest-release', 'latest-snapshot'].includes(p.version)))
-	logger.info(`[FRONTEND] Filtered profiles: ${profiles.length}`)
+	setProfiles(settings.profiles || [])
+	logger.info(`[FRONTEND] Set profiles: ${profiles.length}`)
 	
 	setSavedAccounts(settings.accounts || [])
 	setCurrentAuth(settings.auth || null)
-	setRamAllocation(settings.ramAllocation || 2048)
 	setHideLauncher(settings.hideLauncher || false)
 	setExitAfterLaunch(settings.exitAfterLaunch || false)
 	
@@ -487,7 +635,19 @@ async function loadSettings() {
 */
 async function loadVersions() {
 	logger.info(`[FRONTEND] Calling getVersions...`)
-	const result = await window.api.getVersions()
+	
+	let result
+	if (!navigator.onLine) {
+		logger.info(`[FRONTEND] Offline detected, fetching installed versions only...`)
+		result = await window.api.getInstalledVersions()
+	} else {
+		result = await window.api.getVersions()
+		if (!result.success && result.error && result.error.includes('Failed to fetch')) {
+			logger.info(`[FRONTEND] Fetch failed, falling back to installed versions...`)
+			result = await window.api.getInstalledVersions()
+		}
+	}
+
 	if (!result.success) {
 		showAlert(`Failed to fetch versions: ${result.error}`, 'error')
 		versions = []
@@ -502,7 +662,7 @@ async function loadVersions() {
 	if (versions.length === 0) {
 		const opt = document.createElement('option')
 		opt.value = ''
-		opt.textContent = 'Failed to load versions'
+		opt.textContent = navigator.onLine ? 'Failed to load versions' : 'No installed versions found'
 		opt.disabled = true
 		select.appendChild(opt)
 		return
@@ -514,6 +674,8 @@ async function loadVersions() {
 	const filtered = versions.filter(v => {
 		if (v.id === 'latest-release' || v.id === 'latest-snapshot') return false
 		if (v.type === 'release') return true
+		if (v.type === 'custom') return true
+		
 		if (showSnapshots && v.type === 'snapshot') return true
 		if (showHistorical && (v.type === 'old_beta' || v.type === 'old_alpha')) return true
 		return false
@@ -535,6 +697,11 @@ async function loadVersions() {
 function createConsoleInstance(instanceId, profileName) {
 	const consoleButtonsContainer = document.getElementById('consoleButtons')
 	const logsArea = document.getElementById('logsArea')
+	
+	if (Object.keys(instances).length === 0) {
+		document.getElementById('consoleTab').classList.remove('hidden')
+		switchTab('console')
+	}
 	
 	const btn = document.createElement('button')
 	btn.className = 'group flex-shrink-0 min-w-32 max-w-48 pl-4 py-3 bg-neutral-800 hover:bg-neutral-700 rounded-lg text-left transition-colors border border-neutral-700 flex items-center justify-between'
@@ -619,7 +786,13 @@ function removeConsoleInstance(instanceId) {
 	instances[instanceId].logContainer.remove()
 	delete instances[instanceId]
 	
-	// switch to another instance if this was active
+	if (Object.keys(instances).length === 0) {
+		document.getElementById('consoleTab').classList.add('hidden')
+		switchTab('preview')
+		activeInstanceId = null
+		return
+	}
+	
 	if (activeInstanceId === instanceId) {
 		const remainingIds = Object.keys(instances)
 		if (remainingIds.length > 0) {
@@ -670,9 +843,9 @@ async function launchGame() {
 		profileName: p.name,
 		auth: finalAuth,
 		version: p.version,
-		ram: `${getRamAllocation()}M`,
 		gamePath: getCurrentSettings().gamePath,
-		javaPath: getCurrentSettings().javaPath
+		javaPath: getCurrentSettings().javaPath,
+		profileSettings: p.settings || null
 	}
 
 	const result = await window.api.launch(options)

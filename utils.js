@@ -24,12 +24,12 @@ const logger = {
 	@param {string} gamePath
 	@param {string} message
 */
-function writeLog(gamePath, message) {
+async function writeLog(gamePath, message) {
 	try {
 		const logPath = path.join(gamePath, 'turkuazz_logs.txt')
 		const timestamp = new Date().toLocaleString('en-US', { hour12: false })
 		const logLine = `[${timestamp}] ${message}\n`
-		fs.appendFileSync(logPath, logLine, 'utf8')
+		await fs.promises.appendFile(logPath, logLine, 'utf8')
 	} catch (e) {
 		logger.error(`Failed to write log: ${e.message}`)
 	}
@@ -109,22 +109,31 @@ async function findJavaExecutable() {
 
 /*
 	@param {string} gamePath
-	@return {{ available: number, required: number, hasSpace: boolean }}
+	@return {Promise<{ available: number, required: number, hasSpace: boolean }>}
 */
-function checkDiskSpace(gamePath) {
+async function checkDiskSpace(gamePath) {
 	try {
-		const stats = fs.statfsSync ? fs.statfsSync(gamePath) : null
-		if (!stats) {
-			return { available: Infinity, required: 2 * 1024 * 1024 * 1024, hasSpace: true }
-		}
-		
-		const availableBytes = stats.bavail * stats.bsize
-		const requiredBytes = 2 * 1024 * 1024 * 1024
-		
-		return {
-			available: availableBytes,
-			required: requiredBytes,
-			hasSpace: availableBytes >= requiredBytes
+		if (fs.promises.statfs) {
+			const stats = await fs.promises.statfs(gamePath)
+			const availableBytes = stats.bavail * stats.bsize
+			const requiredBytes = 2 * 1024 * 1024 * 1024
+			
+			return {
+				available: availableBytes,
+				required: requiredBytes,
+				hasSpace: availableBytes >= requiredBytes
+			}
+		} else {
+			// Fallback for older node versions if necessary, or just use sync but wrapped
+			const stats = fs.statfsSync(gamePath)
+			const availableBytes = stats.bavail * stats.bsize
+			const requiredBytes = 2 * 1024 * 1024 * 1024
+			
+			return {
+				available: availableBytes,
+				required: requiredBytes,
+				hasSpace: availableBytes >= requiredBytes
+			}
 		}
 	} catch (e) {
 		logger.error(`[DISK] Failed to check disk space: ${e.message}`)
