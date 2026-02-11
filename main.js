@@ -45,7 +45,9 @@ let win
 
 const createWindow = () => {
 	logger.info(`[STARTUP] Creating window...`)
+	const iconPath = path.join(__dirname, 'assets', process.platform === 'win32' ? 'TURKUAZZMC.ico' : 'TURKUAZZMC.png')
 	win = new BrowserWindow({
+		icon: iconPath,
 		width: 1280,
 		height: 720,
 		webPreferences: {

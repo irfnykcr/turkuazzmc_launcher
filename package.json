@@ -1,6 +1,6 @@
 {
 	"name": "turkuazz_launcher",
-	"version": "0.0.4",
+	"version": "0.0.5",
 	"description": "",
 	"license": "MIT",
 	"author": "",
@@ -34,6 +34,7 @@
 			"target": [
 				"AppImage"
 			],
+			"icon": "assets/TURKUAZZMC.png",
 			"category": "Utility",
 			"files": [
 				"main.js",
@@ -52,7 +53,7 @@
 			"target": [
 				"nsis"
 			],
-			"icon": "winicon.png",
+			"icon": "assets/TURKUAZZMC.ico",
 			"files": [
 				"main.js",
 				"preload.js",
