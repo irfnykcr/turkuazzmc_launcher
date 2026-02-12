@@ -58,5 +58,6 @@ spec/fixtures/logo.png
 
 .cache/
 
+.venv/
 .github/
 TODO.md
