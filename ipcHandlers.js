@@ -621,118 +621,118 @@ function registerHandlers(ipcMain, store, win) {
 				return { success: false, error: errorMsg }
 			}
 
-		const minecraftPath = options.profileSettings?.gamePath || options.gamePath || store.get('gamePath')
-		const ramMB = options.profileSettings?.ramMB || 4096
-		
-		logger.info(`[launch-game] Using RAM: ${ramMB}MB from ${options.profileSettings?.ramMB ? 'profile' : 'global'}`)
-
-		const opts = {
-			gamePath: minecraftPath,
-			javaPath: javaExecutable,
-			version: options.version,
-			minMemory: ramMB,
-			maxMemory: ramMB,
-			launcherName: 'Turkuazz Launcher',
-			launcherBrand: 'turkuazz'
-		}
-
-		const uuidNoDashes = (options.auth.uuid || '').replace(/-/g, '')
-
-		if (options.auth.type === 'ms') {
-			opts.gameProfile = {
-				name: options.auth.name,
-				id: uuidNoDashes
-			}
-			opts.accessToken = options.auth.access_token
-			opts.userType = 'mojang'
-		} else {
-			opts.gameProfile = {
-				name: options.auth.name,
-				id: uuidNoDashes
-			}
-			opts.accessToken = ''
-			opts.userType = 'legacy'
-		}
-
-		let _optswithoutaccesstoken = JSON.parse(JSON.stringify(opts))
-		if (_optswithoutaccesstoken.accessToken) {
-			_optswithoutaccesstoken.accessToken = '***'
-		}
-		logger.info(`Launching with options: ${JSON.stringify(_optswithoutaccesstoken)}`)
-		_optswithoutaccesstoken = undefined
-
-		const profileName = options.profileName || 'Unknown'
-		const accountName = options.auth?.name || 'Unknown'
-		
-		utils.writeLog(gamePath, `LAUNCH | Instance: ${instanceId} | Profile: ${profileName} | Version: ${options.version} | RAM: ${ramMB}MB | Account: ${accountName}`)
-
-		const gameProcess = await launch(opts)
-
-		activeGameProcesses.set(instanceId, gameProcess)
-
-		const hideLauncher = store.get('hideLauncher')
-		const exitAfterLaunch = store.get('exitAfterLaunch')
-		let hasHidden = false
-
-		const watcher = createMinecraftProcessWatcher(gameProcess)
-
-		watcher.on('error', (err) => {
-			logger.error(`[launch-game] Process error: ${err}`)
-			win.webContents.send('log', { instanceId, message: `[ERROR] ${err}` })
-			utils.writeLog(gamePath, `ERROR | Instance: ${instanceId} | ${err}`)
-		})
-
-		watcher.on('minecraft-window-ready', () => {
-			logger.info(`[launch-game] Game window ready`)
-			win.webContents.send('log', { instanceId, message: '[INFO] Game window ready' })
-			utils.writeLog(gamePath, `INFO | Instance: ${instanceId} | Game window ready`)
+			const minecraftPath = options.profileSettings?.gamePath || options.gamePath || store.get('gamePath')
+			const ramMB = options.profileSettings?.ramMB || 4096
 			
-			if (hideLauncher && !hasHidden) {
-				hasHidden = true
-				if (exitAfterLaunch) {
-					utils.writeLog(gamePath, `EXIT | Instance: ${instanceId} | Fully exiting launcher`)
-					logger.info(`[EXIT] Fully exiting launcher - game started`)
-					app.quit()
-				} else {
-					win.hide()
-					logger.info(`[HIDE] Launcher hidden - game started`)
+			logger.info(`[launch-game] Using RAM: ${ramMB}MB from ${options.profileSettings?.ramMB ? 'profile' : 'global'}`)
+
+			const opts = {
+				gamePath: minecraftPath,
+				javaPath: javaExecutable,
+				version: options.version,
+				minMemory: ramMB,
+				maxMemory: ramMB,
+				launcherName: 'Turkuazz Launcher',
+				launcherBrand: 'turkuazz'
+			}
+
+			const uuidNoDashes = (options.auth.uuid || '').replace(/-/g, '')
+
+			if (options.auth.type === 'ms') {
+				opts.gameProfile = {
+					name: options.auth.name,
+					id: uuidNoDashes
 				}
+				opts.accessToken = options.auth.access_token
+				opts.userType = 'mojang'
+			} else {
+				opts.gameProfile = {
+					name: options.auth.name,
+					id: uuidNoDashes
+				}
+				opts.accessToken = ''
+				opts.userType = 'legacy'
 			}
-		})
 
-		watcher.on('minecraft-exit', (event) => {
-			const { code, signal, crashReport, crashReportLocation } = event
-			win.webContents.send('log', { instanceId, message: `[CLOSE] Game closed with code ${code}` })
-			utils.writeLog(gamePath, `CLOSE | Instance: ${instanceId} | Exit Code: ${code}`)
+			let _optswithoutaccesstoken = JSON.parse(JSON.stringify(opts))
+			if (_optswithoutaccesstoken.accessToken) {
+				_optswithoutaccesstoken.accessToken = '***'
+			}
+			logger.info(`Launching with options: ${JSON.stringify(_optswithoutaccesstoken)}`)
+			_optswithoutaccesstoken = undefined
+
+			const profileName = options.profileName || 'Unknown'
+			const accountName = options.auth?.name || 'Unknown'
 			
-			activeGameProcesses.delete(instanceId)
-			
-			if (crashReport) {
-				win.webContents.send('log', { instanceId, message: `[CRASH] Report at: ${crashReportLocation}` })
-				utils.writeLog(gamePath, `CRASH | Instance: ${instanceId} | Report: ${crashReportLocation}`)
+			utils.writeLog(gamePath, `LAUNCH | Instance: ${instanceId} | Profile: ${profileName} | Version: ${options.version} | RAM: ${ramMB}MB | Account: ${accountName}`)
+
+			const gameProcess = await utils.launch_safe(opts)
+
+			activeGameProcesses.set(instanceId, gameProcess)
+
+			const hideLauncher = store.get('hideLauncher')
+			const exitAfterLaunch = store.get('exitAfterLaunch')
+			let hasHidden = false
+
+			const watcher = createMinecraftProcessWatcher(gameProcess)
+
+			watcher.on('error', (err) => {
+				logger.error(`[launch-game] Process error: ${err}`)
+				win.webContents.send('log', { instanceId, message: `[ERROR] ${err}` })
+				utils.writeLog(gamePath, `ERROR | Instance: ${instanceId} | ${err}`)
+			})
+
+			watcher.on('minecraft-window-ready', () => {
+				logger.info(`[launch-game] Game window ready`)
+				win.webContents.send('log', { instanceId, message: '[INFO] Game window ready' })
+				utils.writeLog(gamePath, `INFO | Instance: ${instanceId} | Game window ready`)
+				
+				if (hideLauncher && !hasHidden) {
+					hasHidden = true
+					if (exitAfterLaunch) {
+						utils.writeLog(gamePath, `EXIT | Instance: ${instanceId} | Fully exiting launcher`)
+						logger.info(`[EXIT] Fully exiting launcher - game started`)
+						app.quit()
+					} else {
+						win.hide()
+						logger.info(`[HIDE] Launcher hidden - game started`)
+					}
+				}
+			})
+
+			watcher.on('minecraft-exit', (event) => {
+				const { code, signal, crashReport, crashReportLocation } = event
+				win.webContents.send('log', { instanceId, message: `[CLOSE] Game closed with code ${code}` })
+				utils.writeLog(gamePath, `CLOSE | Instance: ${instanceId} | Exit Code: ${code}`)
+				
+				activeGameProcesses.delete(instanceId)
+				
+				if (crashReport) {
+					win.webContents.send('log', { instanceId, message: `[CRASH] Report at: ${crashReportLocation}` })
+					utils.writeLog(gamePath, `CRASH | Instance: ${instanceId} | Report: ${crashReportLocation}`)
+				}
+
+				if (hideLauncher && hasHidden && !exitAfterLaunch) {
+					win.show()
+					logger.info(`[SHOW] Launcher restored - game closed`)
+				}
+			})
+
+			if (gameProcess.stdout) {
+				gameProcess.stdout.on('data', (data) => {
+					const msg = data.toString()
+					win.webContents.send('log', { instanceId, message: msg })
+					utils.writeLog(gamePath, `DATA | Instance: ${instanceId} | ${msg}`)
+				})
 			}
 
-			if (hideLauncher && hasHidden && !exitAfterLaunch) {
-				win.show()
-				logger.info(`[SHOW] Launcher restored - game closed`)
+			if (gameProcess.stderr) {
+				gameProcess.stderr.on('data', (data) => {
+					const msg = data.toString()
+					win.webContents.send('log', { instanceId, message: `[STDERR] ${msg}` })
+					utils.writeLog(gamePath, `STDERR | Instance: ${instanceId} | ${msg}`)
+				})
 			}
-		})
-
-		if (gameProcess.stdout) {
-			gameProcess.stdout.on('data', (data) => {
-				const msg = data.toString()
-				win.webContents.send('log', { instanceId, message: msg })
-				utils.writeLog(gamePath, `DATA | Instance: ${instanceId} | ${msg}`)
-			})
-		}
-
-		if (gameProcess.stderr) {
-			gameProcess.stderr.on('data', (data) => {
-				const msg = data.toString()
-				win.webContents.send('log', { instanceId, message: `[STDERR] ${msg}` })
-				utils.writeLog(gamePath, `STDERR | Instance: ${instanceId} | ${msg}`)
-			})
-		}
 			
 			return { success: true }
 		} catch (error) {
@@ -742,6 +742,8 @@ function registerHandlers(ipcMain, store, win) {
 			let userFriendlyError = error.message
 			if (error.error === 'CorruptedVersionJar' || error.message?.includes('CorruptedVersionJar')) {
 				userFriendlyError = `Version "${options.version}" is not installed or corrupted. Please install it first.`
+			} else if (error.error === 'MissingVersionJson' || error.message?.includes('MissingVersionJson')) {
+				userFriendlyError = `Version "${options.version}" is not installed. Please install it first.`
 			} else if (error.error === 'MissingLibraries' || error.message?.includes('MissingLibraries')) {
 				userFriendlyError = `Missing game libraries for version "${options.version}". Please reinstall.`
 			}
