@@ -4,6 +4,8 @@ const os = require('os')
 const { promisify } = require('util')
 const { exec } = require('child_process')
 const { launch } = require('@xmcl/core')
+const extractZip = require('extract-zip')
+const tar = require('tar')
 const execAsync = promisify(exec)
 
 const logger = {
@@ -37,75 +39,86 @@ async function writeLog(gamePath, message) {
 }
 
 /*
-	@return {Promise<string>} Path to Java executable
+	@param {string} version
+	@param {number} globalRam
+	@returns {void}
 */
-async function findJavaExecutable() {
+async function extractArchive(src, dest) {
+	if (src.endsWith('.zip')) {
+		await extractZip(src, { dir: dest })
+	} else if (src.endsWith('.tar.gz') || src.endsWith('.tgz')) {
+		await fs.promises.mkdir(dest, { recursive: true })
+		await tar.x({ file: src, cwd: dest })
+	} else {
+		throw new Error(`Unsupported archive format: ${src}`)
+	}
+}
+
+/*
+	@param {string} gamePath
+	@param {string} version
+	@returns {Promise<string>} Path to the java executable
+*/
+async function ensureBundledJava(gamePath, version) {
 	const platform = process.platform
-	const javaPaths = []
+	const bundleDir = path.join(gamePath, 'bundled_java', version)
 	
-	try {
-		const { stdout } = await execAsync(platform === 'win32' ? 'where java' : 'which java')
-		if (stdout.trim()) {
-			javaPaths.push(stdout.trim().split('\n')[0])
-		}
-	} catch (e) {
-		logger.info(`[JAVA] System Java not found in PATH`)
-	}
-	
+	let javaExe
 	if (platform === 'win32') {
-		const commonPaths = [
-			path.join(process.env.ProgramFiles || 'C:\\Program Files', 'Java'),
-			path.join(process.env['ProgramFiles(x86)'] || 'C:\\Program Files (x86)', 'Java'),
-			path.join(process.env.LOCALAPPDATA || '', 'Programs', 'Eclipse Adoptium')
-		]
-		
-		for (const basePath of commonPaths) {
-			try {
-				if (fs.existsSync(basePath)) {
-					const dirs = fs.readdirSync(basePath)
-					for (const dir of dirs) {
-						const javaExe = path.join(basePath, dir, 'bin', 'java.exe')
-						if (fs.existsSync(javaExe)) {
-							javaPaths.push(javaExe)
-						}
-					}
-				}
-			} catch (e) {
-				logger.info(`[JAVA] Failed to scan ${basePath}`)
-			}
-		}
-	} else if (platform === 'linux') {
-		const commonPaths = [
-			'/usr/lib/jvm',
-			'/usr/java',
-			'/opt/java',
-			path.join(os.homedir(), '.jdks')
-		]
-		
-		for (const basePath of commonPaths) {
-			try {
-				if (fs.existsSync(basePath)) {
-					const dirs = fs.readdirSync(basePath)
-					for (const dir of dirs) {
-						const javaExe = path.join(basePath, dir, 'bin', 'java')
-						if (fs.existsSync(javaExe)) {
-							javaPaths.push(javaExe)
-						}
-					}
-				}
-			} catch (e) {
-				logger.info(`[JAVA] Failed to scan ${basePath}`)
-			}
-		}
+		javaExe = path.join(bundleDir, 'bin', 'java.exe')
+	} else if (platform === 'darwin') {
+		javaExe = path.join(bundleDir, 'Contents', 'Home', 'bin', 'java')
+	} else {
+		javaExe = path.join(bundleDir, 'bin', 'java')
+	}
+
+	if (fs.existsSync(javaExe)) {
+		return javaExe
+	}
+
+	const osMap = {
+		win32: 'windows',
+		linux: 'linux'
+	}
+	const osName = osMap[platform] || 'linux'
+	
+	const apiUrl = `https://api.adoptium.net/v3/assets/latest/${version}/hotspot?os=${osName}&architecture=x64&image_type=jre`
+	
+	logger.info(`[JAVA] Fetching Java ${version} from ${apiUrl}`)
+	const res = await fetch(apiUrl)
+	if (!res.ok) throw new Error(`Failed to fetch Java info: ${res.statusText}`)
+	
+	const data = await res.json()
+	if (!data || data.length === 0) throw new Error(`No Java ${version} found for ${osName}`)
+	
+	const pkg = data[0].binary.package
+	const downloadUrl = pkg.link
+	const archiveName = pkg.name
+	
+	const tmpArchive = path.join(gamePath, 'bundled_java', archiveName)
+	
+	logger.info(`[JAVA] Downloading Java ${version} from ${downloadUrl}`)
+	await downloadToFile(downloadUrl, tmpArchive)
+	
+	logger.info(`[JAVA] Extracting Java ${version} to ${bundleDir}`)
+	const extractDir = path.join(gamePath, 'bundled_java', `tmp_${version}`)
+	await extractArchive(tmpArchive, extractDir)
+	
+	const dirs = await fs.promises.readdir(extractDir)
+	if (dirs.length === 1) {
+		await fs.promises.rename(path.join(extractDir, dirs[0]), bundleDir)
+		await fs.promises.rmdir(extractDir)
+	} else {
+		await fs.promises.rename(extractDir, bundleDir)
 	}
 	
-	if (javaPaths.length > 0) {
-		logger.info(`[JAVA] Found Java installations: ${javaPaths.join(', ')}`)
-		return javaPaths[0]
+	await fs.promises.unlink(tmpArchive)
+	
+	if (platform !== 'win32') {
+		await execAsync(`chmod +x "${javaExe}"`)
 	}
 	
-	logger.info(`[JAVA] No Java found, defaulting to "java"`)
-	return 'java'
+	return javaExe
 }
 
 /*
@@ -125,7 +138,6 @@ async function checkDiskSpace(gamePath) {
 				hasSpace: availableBytes >= requiredBytes
 			}
 		} else {
-			// Fallback for older node versions if necessary, or just use sync but wrapped
 			const stats = fs.statfsSync(gamePath)
 			const availableBytes = stats.bavail * stats.bsize
 			const requiredBytes = 2 * 1024 * 1024 * 1024
@@ -254,7 +266,7 @@ async function launch_safe(opts) {
 
 module.exports = {
 	writeLog,
-	findJavaExecutable,
+	ensureBundledJava,
 	checkDiskSpace,
 	launch_safe,
 }

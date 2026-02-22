@@ -2,7 +2,7 @@
 set -e
 
 RM_STUFF="rm -rf node_modules dist package-lock.json"
-UPDATE_NPM="npm install -g npm@11.8.0"
+UPDATE_NPM="npm install -g npm@11.10.1"
 ELECTRON_BUILDER="npx electron-builder --win --x64"
 
 docker run --rm -ti \

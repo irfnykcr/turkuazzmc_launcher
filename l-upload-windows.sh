@@ -1,6 +1,6 @@
 
-VERSION="0.0.5"
-NOTES="switched minecraft core library with new maintained library, added image caching, added profile editing and preview & added tabs for preview/cosole toggle, added offline handling for versions, still working on auto-update, made file write/read async"
+VERSION="0.0.7"
+NOTES="trying bundled java"
 
 
 cd ./test_server

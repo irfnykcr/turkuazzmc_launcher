@@ -26,7 +26,6 @@ const store = new Store({
 	gamePath: process.platform === 'win32' 
 	  ? path.join(process.env.APPDATA, '.minecraft') 
 	  : path.join(os.homedir(), '.minecraft'),
-	javaPath: 'java',
 	javaArgs: '-Xmx4096M -Xms4096M',
 	hideLauncher: false,
 	exitAfterLaunch: false,

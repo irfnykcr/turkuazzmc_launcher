@@ -68,7 +68,6 @@ export function getCurrentSettings() {
 */
 export function showSettings() {
 	document.getElementById('gamePathInput').value = currentSettings.gamePath || ''
-	document.getElementById('javaPathInput').value = currentSettings.javaPath || 'java'
 	const ramSlider = document.getElementById('ramSlider')
 	const ramInput = document.getElementById('ramInput')
 	const ramMB = currentSettings.ramMB || 4096
@@ -103,7 +102,6 @@ export async function browseGamePath() {
 export function getSettingsFormData() {
 	return {
 		gamePath: document.getElementById('gamePathInput').value,
-		javaPath: document.getElementById('javaPathInput').value,
 		ramMB: parseInt(document.getElementById('ramSlider').value),
 		hideLauncher: document.getElementById('hideLauncherCheckbox').checked,
 		exitAfterLaunch: document.getElementById('exitAfterLaunchCheckbox').checked

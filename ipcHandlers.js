@@ -90,7 +90,7 @@ function registerHandlers(ipcMain, store, win) {
 					
 					try {
 						await fs.promises.access(jsonPath)
-						// Check if jar exists (optional, but good for validity)
+						// check if jar exists
 						await fs.promises.access(jarPath)
 						
 						const content = await fs.promises.readFile(jsonPath, 'utf8')
@@ -103,7 +103,6 @@ function registerHandlers(ipcMain, store, win) {
 							releaseTime: vJson.releaseTime || new Date().toISOString()
 						})
 					} catch (e) {
-						// Not a valid version dir
 					}
 				}
 			}
@@ -124,13 +123,12 @@ function registerHandlers(ipcMain, store, win) {
 			const safeName = name.replace(/[^a-zA-Z0-9_-]/g, '')
 			const filePath = path.join(cacheDir, `${safeName}.png`)
 			
-			// Try reading from cache first
+			// check cache
 			try {
 				await fs.promises.access(filePath)
 				const data = await fs.promises.readFile(filePath, 'base64')
 				return { success: true, data: `data:image/png;base64,${data}` }
 			} catch (e) {
-				// Cache miss
 			}
 			
 			return new Promise((resolve) => {
@@ -183,12 +181,8 @@ function registerHandlers(ipcMain, store, win) {
 		logger.info(`[get-settings] Called`)
 		
 		try {
-			const javaPath = store.get('javaPath')
-			const autoDetectedJava = javaPath === 'java' ? await utils.findJavaExecutable() : javaPath
-			
 			let settings = {
 				gamePath: store.get('gamePath'),
-				javaPath: autoDetectedJava,
 				ramMB: store.get('ramMB', 4096),
 				javaArgs: store.get('javaArgs', '-Xmx4096M -Xms4096M'),
 				hideLauncher: store.get('hideLauncher'),
@@ -251,10 +245,10 @@ function registerHandlers(ipcMain, store, win) {
 									isCustom: isCustom
 								}
 								
-								if (p.javaArgs || p.javaPath || p.ramMB) {
+								if (p.javaArgs || p.javaVersion || p.ramMB) {
 									profile.settings = {}
 									if (p.javaArgs) profile.settings.javaArgs = p.javaArgs
-									if (p.javaPath) profile.settings.javaPath = p.javaPath
+									if (p.javaVersion) profile.settings.javaVersion = p.javaVersion
 									if (p.ramMB) profile.settings.ramMB = p.ramMB
 								}
 								
@@ -295,7 +289,6 @@ function registerHandlers(ipcMain, store, win) {
 			logger.error(`[get-settings] Error: ${error}`)
 			return {
 				gamePath: store.get('gamePath'),
-				javaPath: 'java',
 				ramMB: store.get('ramMB', 4096),
 				hideLauncher: store.get('hideLauncher'),
 				exitAfterLaunch: store.get('exitAfterLaunch'),
@@ -331,7 +324,6 @@ function registerHandlers(ipcMain, store, win) {
 					launcherData = JSON.parse(content)
 					if (!launcherData.profiles) launcherData.profiles = {}
 				} catch (err) {
-					// Ignore if file doesn't exist
 				}
 				
 				for (const [id, p] of Object.entries(launcherData.profiles)) {
@@ -348,7 +340,8 @@ function registerHandlers(ipcMain, store, win) {
 						lastVersionId: p.version,
 						created: new Date().toISOString(),
 						lastUsed: new Date().toISOString(),
-						ramMB: p.settings?.ramMB || null
+						ramMB: p.settings?.ramMB || null,
+						javaVersion: p.settings?.javaVersion || null
 					}
 				})
 			
@@ -402,7 +395,6 @@ function registerHandlers(ipcMain, store, win) {
 							return { success: true, versions: data.versions }
 						}
 					} catch (e) {
-						// Continue to next path
 					}
 				}
 				logger.warn(`[get-versions] No valid local cache found`)
@@ -442,7 +434,6 @@ function registerHandlers(ipcMain, store, win) {
 				const jars = modFiles.filter(f => f.endsWith('.jar'))
 				result.mods = jars.map(f => ({ name: f, path: path.join(modsPath, f) }))
 			} catch (err) {
-				// Ignore if mods folder doesn't exist
 			}
 			
 			return { success: true, data: result }
@@ -606,11 +597,14 @@ function registerHandlers(ipcMain, store, win) {
 				return { success: false, error: errorMsg }
 			}
 
-			const javaPath = options.profileSettings?.javaPath || options.javaPath || store.get('javaPath') || 'java'
-			const javaExecutable = javaPath === 'java' ? await utils.findJavaExecutable() : javaPath
+			const javaVersion = options.profileSettings?.javaVersion || '17'
+			win.webContents.send('log', { instanceId, message: `[INFO] Checking Java ${javaVersion} runtime...` })
 			
-			if (!javaExecutable || javaExecutable === 'java') {
-				const errorMsg = 'Java not found. Please install Java or configure Java path in settings.'
+			let javaExecutable
+			try {
+				javaExecutable = await utils.ensureBundledJava(gamePath, javaVersion)
+			} catch (e) {
+				const errorMsg = `Failed to download/setup Java ${javaVersion}: ${e.message}`
 				utils.writeLog(gamePath, `ERROR | Instance: ${instanceId} | ${errorMsg}`)
 				return { success: false, error: errorMsg }
 			}
@@ -720,17 +714,25 @@ function registerHandlers(ipcMain, store, win) {
 
 			if (gameProcess.stdout) {
 				gameProcess.stdout.on('data', (data) => {
-					const msg = data.toString()
-					win.webContents.send('log', { instanceId, message: msg })
-					utils.writeLog(gamePath, `DATA | Instance: ${instanceId} | ${msg}`)
+					try {
+						const msg = data.toString()
+						win.webContents.send('log', { instanceId, message: msg })
+						utils.writeLog(gamePath, `DATA | Instance: ${instanceId} | ${msg}`)
+					} catch (e) {
+						logger.error(`[launch-game] Failed to process stdout data: ${e}`)
+					}
 				})
 			}
 
 			if (gameProcess.stderr) {
 				gameProcess.stderr.on('data', (data) => {
-					const msg = data.toString()
-					win.webContents.send('log', { instanceId, message: `[STDERR] ${msg}` })
-					utils.writeLog(gamePath, `STDERR | Instance: ${instanceId} | ${msg}`)
+					try {
+						const msg = data.toString()
+						win.webContents.send('log', { instanceId, message: `[STDERR] ${msg}` })
+						utils.writeLog(gamePath, `STDERR | Instance: ${instanceId} | ${msg}`)
+					} catch (e) {
+						logger.error(`[launch-game] Failed to process stderr data: ${e}`)
+					}
 				})
 			}
 			
