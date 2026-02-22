@@ -333,18 +333,16 @@ async function handleSaveProfile(e) {
 	const version = document.getElementById('pVersion').value
 	
 	const ramMB = parseInt(document.getElementById('pRamSlider').value)
-	const javaPath = document.getElementById('pJavaPathInput').value.trim()
+	const javaVersion = document.getElementById('pJavaVersion').value
 	const globalRam = currentSettings.ramMB || 4096
-	const globalJavaPath = (currentSettings.javaPath || 'java').trim()
 	
 	const editingIndex = parseInt(document.getElementById('editingProfileIndex').value)
 	const newProfile = { name, version }
 	
-	const hasJavaOverride = javaPath && javaPath !== globalJavaPath
-	if (ramMB !== globalRam || hasJavaOverride) {
+	if (ramMB !== globalRam || javaVersion !== '17') {
 		newProfile.settings = {}
 		if (ramMB !== globalRam) newProfile.settings.ramMB = ramMB
-		if (hasJavaOverride) newProfile.settings.javaPath = javaPath
+		if (javaVersion !== '17') newProfile.settings.javaVersion = javaVersion
 	}
 	
 	if (editingIndex >= 0) {
@@ -362,7 +360,7 @@ async function handleSaveProfile(e) {
 	document.getElementById('pRamSlider').min = 0
 	document.getElementById('pRamInput').value = globalRam
 	document.getElementById('pRamInput').min = 0
-	document.getElementById('pJavaPathInput').value = globalJavaPath
+	document.getElementById('pJavaVersion').value = '17'
 	document.getElementById('editingProfileIndex').value = '-1'
 	document.getElementById('profileModalTitle').textContent = 'Create Profile'
 	document.getElementById('profileSettingsSection').classList.add('hidden')

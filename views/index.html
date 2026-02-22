@@ -88,7 +88,7 @@
 								</button>
 								<div id="launchVarsContent" class="hidden mt-2 text-xs font-mono bg-black p-2 rounded overflow-x-auto">
 									<div><span class="text-neutral-500">Game Dir:</span> <span id="varGamePath" class="text-green-400">-</span></div>
-									<div><span class="text-neutral-500">Java:</span> <span id="varJavaPath" class="text-green-400">-</span></div>
+									<div><span class="text-neutral-500">Java:</span> <span id="varJavaVersion" class="text-green-400">-</span></div>
 									<div><span class="text-neutral-500">RAM:</span> <span id="varRam" class="text-green-400">-</span></div>
 								</div>
 							</div>
@@ -175,9 +175,13 @@
 					
 					<div id="profileSettingsSection" class="hidden mt-3 space-y-3 pl-5 border-l-2 border-neutral-700">
 						<div>
-							<label class="block text-xs font-medium mb-2 text-neutral-400">Custom Java Path</label>
-							<input type="text" id="pJavaPathInput" class="w-full bg-neutral-700 border border-neutral-600 rounded p-2 focus:border-green-500 focus:outline-none text-sm" placeholder="Leave empty to use global setting">
-							<p class="text-xs text-neutral-500 mt-1">Override global Java path for this profile only</p>
+							<label class="block text-xs font-medium mb-2 text-neutral-400">Java Version</label>
+							<select id="pJavaVersion" class="w-full bg-neutral-700 border border-neutral-600 rounded p-2 focus:border-green-500 focus:outline-none text-sm scrollbar-thin scrollbar-thumb-neutral-600">
+								<option value="8">Java 8 (Older versions)</option>
+								<option value="17" selected>Java 17 (1.17 - 1.20.4)</option>
+								<option value="21">Java 21 (1.20.5+)</option>
+							</select>
+							<p class="text-xs text-neutral-500 mt-1">Select the Java version required for this Minecraft version</p>
 						</div>
 						<div>
 							<label class="block text-xs font-medium mb-2 text-neutral-400">Custom RAM Allocation</label>
@@ -311,12 +315,7 @@
 							<p class="text-xs text-neutral-500 mt-1">.minecraft folder location</p>
 						</div>
 
-						<!-- Java Path -->
-						<div>
-							<label class="block text-sm font-medium mb-2">Java Path</label>
-							<input type="text" id="javaPathInput" class="w-full bg-neutral-700 border border-neutral-600 rounded p-2 focus:border-green-500 focus:outline-none text-sm" placeholder="java">
-							<p class="text-xs text-neutral-500 mt-1">Leave as 'java' to use system default, or specify full path to java executable</p>
-						</div>
+
 
 					<!-- RAM Allocation -->
 					<div>

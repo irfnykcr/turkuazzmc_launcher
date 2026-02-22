@@ -64,13 +64,12 @@ export function selectProfile(index) {
 */
 export function showCreateProfile() {
 	const globalRam = getCurrentSettings().ramMB || 4096
-	const globalJavaPath = getCurrentSettings().javaPath || 'java'
 	document.getElementById('pRamSlider').min = 0
 	document.getElementById('pRamSlider').value = globalRam
 	document.getElementById('pRamInput').min = 0
 	document.getElementById('pRamInput').value = globalRam
 	document.getElementById('pRamHelp').textContent = `Starts from global setting (${globalRam} MB), adjust as needed`
-	document.getElementById('pJavaPathInput').value = globalJavaPath
+	document.getElementById('pJavaVersion').value = '17'
 	document.getElementById('profileSettingsSection').classList.remove('hidden')
 	document.getElementById('profileSettingsArrow').classList.add('rotate-180')
 	document.getElementById('profileModal').classList.remove('hidden')
@@ -142,7 +141,6 @@ export async function handleEditProfile() {
 	const ramSlider = document.getElementById('pRamSlider')
 	const ramInput = document.getElementById('pRamInput')
 	const globalRam = getCurrentSettings().ramMB || 4096
-	const globalJavaPath = getCurrentSettings().javaPath || 'java'
 	const ramMB = p.settings?.ramMB || globalRam
 	
 	ramSlider.min = 0
@@ -150,8 +148,8 @@ export async function handleEditProfile() {
 	ramInput.min = 0
 	ramInput.value = ramMB
 	
-	const javaPathInput = document.getElementById('pJavaPathInput')
-	javaPathInput.value = p.settings?.javaPath || globalJavaPath
+	const javaVersionInput = document.getElementById('pJavaVersion')
+	javaVersionInput.value = p.settings?.javaVersion || '17'
 
 	document.getElementById('profileSettingsSection').classList.remove('hidden')
 	document.getElementById('profileSettingsArrow').classList.add('rotate-180')
@@ -180,7 +178,7 @@ export async function updatePreview() {
 	
 	const settings = await window.api.getSettings()
 	document.getElementById('varGamePath').textContent = settings.gamePath || '-'
-	document.getElementById('varJavaPath').textContent = settings.javaPath || 'java'
+	document.getElementById('varJavaVersion').textContent = p.settings?.javaVersion || '17'
 	document.getElementById('varRam').textContent = p.settings?.ramMB ? `${p.settings.ramMB} MB` : '4096 MB (Global)'
 	
 	const modsListElement = document.getElementById('modsList')
