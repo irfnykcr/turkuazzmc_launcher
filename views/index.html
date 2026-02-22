@@ -10,7 +10,7 @@
 <!-- body: #181818 -->
 <body class="text-neutral-100 h-screen flex overflow-hidden select-none w-screen">
 	
-	<!-- Sidebar -->
+	<!-- sidebar -->
 	<div class="w-64 bg-neutral-800 flex flex-col border-r border-neutral-700 h-full shrink-0">
 		<div class="p-4 border-b border-neutral-700">
 			<h1 class="text-xl font-bold flex items-center gap-2">
@@ -19,11 +19,11 @@
 		</div>
 		
 		<div class="flex-1 overflow-y-auto p-4 flex flex-col gap-2" id="profileList">
-			<!-- Profile Items Generated Here -->
+			<!-- dyanmic profile items -->
 		</div>
 
 		<div class="p-4 border-t border-neutral-700 bg-neutral-850">
-			<!-- Account Section -->
+			<!-- account section -->
 			<div id="accountSection" class="mb-4 flex items-center justify-between bg-neutral-900 p-2 rounded cursor-pointer hover:bg-black transition">
 				<div class="flex items-center gap-2 overflow-hidden">
 					<img src="https://mc-heads.net/avatar/Steve" id="accountAvatar" class="w-8 h-8 rounded">
@@ -40,10 +40,10 @@
 		</div>
 	</div>
 
-	<!-- Main Content -->
+	<!-- main content -->
 	<div class="flex-1 flex flex-col relative h-full min-w-0 overflow-hidden">
 		
-		<!-- Header / Selected Profile Info -->
+		<!-- selected profile info -->
 		<div class="bg-neutral-800 p-6 shadow-md z-10 relative">
 			<button id="settingsBtn" class="absolute top-4 right-4 p-2 text-neutral-400 hover:text-white transition" title="Settings">
 				<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
@@ -55,15 +55,15 @@
 			</div>
 		</div>
 
-		<!-- Middle Area (Consoles / Status) -->
+		<!-- console/status -->
 		<div class="flex-1 bg-neutral-900 flex flex-col min-h-0">
-			<!-- Tabs -->
+			<!-- tabs -->
 			<div class="flex border-b border-neutral-700 bg-neutral-800">
 				<button id="previewTab" class="px-6 py-3 font-semibold border-b-2 border-green-500 text-green-500">Preview</button>
 				<button id="consoleTab" class="px-6 py-3 font-semibold border-b-2 border-transparent text-neutral-400 hover:text-white hidden">Console</button>
 			</div>
 
-			<!-- Preview Content -->
+			<!-- preview content -->
 			<div id="previewContent" class="flex-1 p-6 overflow-y-auto">
 				<div id="noProfileSelected" class="flex flex-col items-center justify-center h-full text-neutral-500">
 					<svg class="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
@@ -107,27 +107,27 @@
 				</div>
 			</div>
 
-			<!-- Console Content -->
+			<!-- console content -->
 			<div id="consoleContent" class="hidden flex-1 p-6 flex flex-col min-h-0">
-				<!-- Console Buttons -->
+				<!-- console buttons -->
 				<div id="consoleButtons" class="flex gap-2 mb-4 overflow-x-scroll pb-2">
 					<!-- dynamic -->
 				</div>
 				
-				<!-- Logs Area -->
+				<!-- logs area -->
 				<div id="logsArea" class="flex-1 min-h-0 relative">
 					<!-- dynamic -->
 				</div>
 			</div>
 			</div>
 
-			<!-- Bottom Actions -->
+			<!-- bottom actions -->
 			<div class="p-6 bg-neutral-900 border-t border-neutral-700">
 				<div id="statusMessage" class="text-center text-neutral-400 italic mb-4">
 					Ready to launch
 				</div>
 
-				<!-- Launch Button Area -->
+				<!-- launch button -->
 				<div class="flex justify-center">
 					<button id="launchBtn" class="bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-lg font-bold py-4 px-12 rounded shadow-lg transform transition active:scale-95">
 						PLAY
@@ -137,7 +137,7 @@
 		</div>
 	</div>
 
-	<!-- Create/Edit Profile Modal -->
+	<!-- create/edit profile modal -->
 	<div id="profileModal" class="fixed inset-0 bg-black bg-opacity-70 hidden flex items-center justify-center z-50">
 		<div class="bg-neutral-800 rounded-lg w-full max-w-sm p-6 shadow-xl border border-neutral-700">
 			<h3 id="profileModalTitle" class="text-xl font-bold mb-4">Create Profile</h3>
@@ -203,12 +203,12 @@
 		</div>
 	</div>
 
-	<!-- Account Modal -->
+	<!-- account modal -->
 	<div id="accountModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
-		<!-- Backdrop -->
+		<!-- backdrop -->
 		<div id="accountModalOverlay" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
 		
-		<!-- Modal Content -->
+		<!-- modal content -->
 		<div id="accountModalContent" class="relative bg-neutral-800 rounded-lg w-full max-w-2xl p-6 shadow-2xl border border-neutral-600 flex flex-col h-[600px] transform transition-all scale-100 opacity-100 z-10">
 			<div class="flex justify-between items-center mb-6 border-b border-neutral-700 pb-4">
 				<h3 class="text-2xl font-bold text-white">Account Manager</h3>
@@ -216,21 +216,21 @@
 			</div>
 			
 			<div class="flex-1 flex gap-6 overflow-hidden">
-				<!-- Left: Account List -->
+				<!-- left: account list -->
 				 <div class="w-1/2 flex flex-col overflow-hidden">
 					<h4 class="font-bold text-neutral-400 mb-2 text-sm uppercase">Saved Accounts</h4>
 					<div id="savedAccountsList" class="flex-1 overflow-y-auto space-y-2 pr-2">
-						<!-- Account Items Generated JS -->
+						<!-- dynamic account list -->
 						<div class="text-center text-neutral-500 mt-10 italic">No saved accounts</div>
 					</div>
 				 </div>
 
-				 <!-- Right: Add Actions -->
+				 <!-- right: add actions -->
 				 <div class="w-1/2 flex flex-col border-l border-neutral-700 pl-6">
 					<h4 class="font-bold text-neutral-400 mb-4 text-sm uppercase">Add New Account</h4>
 					
 					<div class="space-y-6">
-						<!-- Microsoft -->
+						<!-- microsoft -->
 						<div>
 							<div class="text-sm font-semibold mb-2">Microsoft Account</div>
 							<button id="msLoginBtn" class="w-full bg-green-700 hover:bg-green-600 text-white font-bold py-3 px-4 rounded flex items-center justify-center gap-2 transition shadow-lg">
@@ -239,14 +239,14 @@
 							</button>
 						</div>
 
-						<!-- Divider -->
+						<!-- divider -->
 						<div class="relative flex py-2 items-center">
 							<div class="flex-grow border-t border-neutral-600"></div>
 							<span class="flex-shrink mx-4 text-neutral-500 text-xs">OR</span>
 							<div class="flex-grow border-t border-neutral-600"></div>
 						</div>
 
-						<!-- Offline -->
+						<!-- offline -->
 						<div>
 							<div class="text-sm font-semibold mb-2">Offline Account</div>
 							<div class="flex flex-col gap-2">
@@ -263,7 +263,7 @@
 		</div>
 	</div>
 
-	<!-- Confirm Modal -->
+	<!-- confirm modal -->
 	<div id="confirmModal" class="fixed inset-0 z-[60] hidden flex items-center justify-center">
 		<div class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
 		<div class="relative bg-neutral-800 rounded-lg p-6 shadow-2xl border border-neutral-600 w-96 z-10 transform scale-100 transition-all">
@@ -276,7 +276,7 @@
 		</div>
 	</div>
 
-	<!-- Settings Modal -->
+	<!-- settings modal -->
 	<div id="settingsModal" class="fixed inset-0 z-50 hidden flex items-center justify-center">
 		<div id="settingsModalOverlay" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
 		<div class="relative bg-neutral-800 rounded-lg w-full max-w-2xl p-6 shadow-2xl border border-neutral-600 z-10">
@@ -286,7 +286,7 @@
 			</div>
 			
 			<div class="space-y-8">
-				<!-- Launcher Options Section -->
+				<!-- launcher options -->
 				<div>
 					<h4 class="text-lg font-bold text-green-500 mb-4 uppercase tracking-wide">Launcher Options</h4>
 					<div class="space-y-4 pl-4">
@@ -301,11 +301,11 @@
 					</div>
 				</div>
 
-				<!-- Game Options Section -->
+				<!-- game options -->
 				<div>
 					<h4 class="text-lg font-bold text-green-500 mb-4 uppercase tracking-wide">Game Options</h4>
 					<div class="space-y-6 pl-4">
-						<!-- Minecraft Directory -->
+						<!-- minecraft directory -->
 						<div>
 							<label class="block text-sm font-medium mb-2">Minecraft Directory</label>
 							<div class="flex gap-2">
@@ -317,7 +317,7 @@
 
 
 
-					<!-- RAM Allocation -->
+					<!-- ram -->
 					<div>
 						<label class="block text-sm font-medium mb-2">Default RAM Allocation</label>
 						<div class="flex items-center gap-3">
@@ -330,7 +330,7 @@
 					</div>
 				</div>
 
-				<!-- Action Buttons -->
+				<!-- action buttons -->
 				<div class="pt-4 flex justify-end gap-2 border-t border-neutral-700">
 					<button id="cancelSettingsBtn" class="px-4 py-2 hover:bg-neutral-700 rounded text-sm">Cancel</button>
 					<button id="saveSettingsBtn" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded font-semibold text-sm">Save Settings</button>
