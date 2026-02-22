@@ -314,7 +314,7 @@ function showAlert(msg, type = 'info') {
 
 
 
-// Profile handlers
+// profile handlers
 window.removeProfileHandler = async (index) => {
 	const p = profiles[index]
 	showConfirm(`Are you sure you want to delete profile "${p.name}"?`, async () => {
@@ -367,7 +367,7 @@ async function handleSaveProfile(e) {
 	document.getElementById('profileSettingsArrow').classList.remove('rotate-180')
 }
 
-// Account handlers
+// account handlers
 window.switchAccountHandler = async (acc) => {
 	setCurrentAuth(acc)
 	await saveAllSettings()
@@ -495,7 +495,7 @@ async function performMicrosoftLogin() {
 
 
 
-// Settings handlers
+// settings handlers
 async function handleSaveSettings() {
 	const formData = getSettingsFormData()
 	const gamePath = formData.gamePath

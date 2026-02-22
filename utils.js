@@ -138,7 +138,6 @@ async function checkDiskSpace(gamePath) {
 				hasSpace: availableBytes >= requiredBytes
 			}
 		} else {
-			// Fallback for older node versions if necessary, or just use sync but wrapped
 			const stats = fs.statfsSync(gamePath)
 			const availableBytes = stats.bavail * stats.bsize
 			const requiredBytes = 2 * 1024 * 1024 * 1024

@@ -1,6 +1,6 @@
 
-VERSION="0.0.6"
-NOTES="fixed syntax spacing on ipchandlers, added launch_safe but still in development, added basic readme"
+VERSION="0.0.7"
+NOTES="trying bundled java"
 
 
 cd ./test_server

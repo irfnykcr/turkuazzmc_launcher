@@ -90,7 +90,7 @@ function registerHandlers(ipcMain, store, win) {
 					
 					try {
 						await fs.promises.access(jsonPath)
-						// Check if jar exists (optional, but good for validity)
+						// check if jar exists
 						await fs.promises.access(jarPath)
 						
 						const content = await fs.promises.readFile(jsonPath, 'utf8')
@@ -103,7 +103,6 @@ function registerHandlers(ipcMain, store, win) {
 							releaseTime: vJson.releaseTime || new Date().toISOString()
 						})
 					} catch (e) {
-						// Not a valid version dir
 					}
 				}
 			}
@@ -124,13 +123,12 @@ function registerHandlers(ipcMain, store, win) {
 			const safeName = name.replace(/[^a-zA-Z0-9_-]/g, '')
 			const filePath = path.join(cacheDir, `${safeName}.png`)
 			
-			// Try reading from cache first
+			// check cache
 			try {
 				await fs.promises.access(filePath)
 				const data = await fs.promises.readFile(filePath, 'base64')
 				return { success: true, data: `data:image/png;base64,${data}` }
 			} catch (e) {
-				// Cache miss
 			}
 			
 			return new Promise((resolve) => {
@@ -326,7 +324,6 @@ function registerHandlers(ipcMain, store, win) {
 					launcherData = JSON.parse(content)
 					if (!launcherData.profiles) launcherData.profiles = {}
 				} catch (err) {
-					// Ignore if file doesn't exist
 				}
 				
 				for (const [id, p] of Object.entries(launcherData.profiles)) {
@@ -398,7 +395,6 @@ function registerHandlers(ipcMain, store, win) {
 							return { success: true, versions: data.versions }
 						}
 					} catch (e) {
-						// Continue to next path
 					}
 				}
 				logger.warn(`[get-versions] No valid local cache found`)
@@ -438,7 +434,6 @@ function registerHandlers(ipcMain, store, win) {
 				const jars = modFiles.filter(f => f.endsWith('.jar'))
 				result.mods = jars.map(f => ({ name: f, path: path.join(modsPath, f) }))
 			} catch (err) {
-				// Ignore if mods folder doesn't exist
 			}
 			
 			return { success: true, data: result }
